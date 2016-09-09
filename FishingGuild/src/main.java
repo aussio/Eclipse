@@ -6,7 +6,6 @@ import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.NPC;
-import org.osbot.rs07.api.model.RS2Object;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.api.ui.Tab;
 import org.osbot.rs07.script.Script;
@@ -25,7 +24,18 @@ public class main extends Script {
 	private int fishCaught = 0;
 	private int lastMouseAction = 0;
 
-    private final Area fishingDocksArea = new Area(2599, 3425, 2600, 3420);
+    private final Area fishingDocksArea = new Area(
+    	new int[][]{
+    		{2604, 3420},
+    		{2599, 3420},
+    		{2599, 3425},
+    		{2604, 3425},
+    		{2604, 3424},
+    		{2600, 3424},
+    		{2600, 3421},
+    		{2604, 3421}
+    	}
+    );
 	private final Area guildBankArea = new Area(2585, 3422, 2588, 3418);
 
   private enum State {
@@ -163,7 +173,8 @@ public class main extends Script {
                 getWalking().webWalk(new Position(guildBankArea.getRandomPosition()));
                 break;
             case OPEN_AND_USE_BANK:
-    			RS2Object bank = getObjects().closest(new Filter<NPC>() {
+    			@SuppressWarnings("unchecked")
+				NPC bank = getNpcs().closest(new Filter<NPC>() {
                     @Override
                     public boolean match(NPC n) {
                         return (n.hasAction("Bank") && n.hasAction("Collect"));
@@ -232,4 +243,3 @@ public class main extends Script {
 //          - move mouse off screen like I'm AFK
 //          - check fishing xp
 //          - check inventory if not already on inv tab
-// @TODO - improve fishingArea to cover whole dock to not confuse script
