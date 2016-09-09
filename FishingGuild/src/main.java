@@ -163,7 +163,12 @@ public class main extends Script {
                 getWalking().webWalk(new Position(guildBankArea.getRandomPosition()));
                 break;
             case OPEN_AND_USE_BANK:
-    			RS2Object bank = getObjects().closest("Bank booth");
+    			RS2Object bank = getObjects().closest(new Filter<NPC>() {
+                    @Override
+                    public boolean match(NPC n) {
+                        return (n.hasAction("Bank") && n.hasAction("Collect"));
+                    }
+                });
     			state = "Opening bank";
     			if (bank != null) {
     				if (bank.interact("Bank")) {
@@ -220,3 +225,11 @@ public class main extends Script {
         return random(200,300);
     } // end onLoop()
 } // end class main
+
+// @TODO - Paint variables need to reset between runs
+// @TODO - Change gained levels to xp/hr
+// @TODO - improve antiban
+//          - move mouse off screen like I'm AFK
+//          - check fishing xp
+//          - check inventory if not already on inv tab
+// @TODO - improve fishingArea to cover whole dock to not confuse script
