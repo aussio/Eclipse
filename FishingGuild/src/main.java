@@ -24,18 +24,7 @@ public class main extends Script {
 	private int fishCaught = 0;
 	private int lastMouseAction = 0;
 
-    private final Area fishingDocksArea = new Area(
-    	new int[][]{
-    		{2604, 3420},
-    		{2599, 3420},
-    		{2599, 3425},
-    		{2604, 3425},
-    		{2604, 3424},
-    		{2600, 3424},
-    		{2600, 3421},
-    		{2604, 3421}
-    	}
-    );
+    private final Area fishingDocksArea = new Area(2599, 3420, 2604, 3425);
 	private final Area guildBankArea = new Area(2585, 3422, 2588, 3418);
 
   private enum State {
@@ -124,30 +113,42 @@ public class main extends Script {
     */
     private State getState() {
         // Inventory full, banking states
-        if (getInventory().isFull()
-                && !guildBankArea.contains(myPlayer())
+    	Boolean inventoryFull = getInventory().isFull();
+    	Boolean inBank = guildBankArea.contains(myPlayer());
+    	Boolean onDock = fishingDocksArea.contains(myPlayer());
+    	Boolean isAnimating = myPlayer().isAnimating();
+    	/* Debug stuff
+    	String states = String.format("inventoryFull: %1$B"
+    			+ "\n inBank: %2$B"
+    			+ "\n onDock: %3$B"
+    			+ "\n isAnimating: %4$B",
+    			inventoryFull, inBank, onDock, isAnimating);
+    	log(states);
+    	*/
+        if (inventoryFull
+                && !inBank
                 && !getBank().isOpen())
             return State.WALK_TO_BANK;
-        if (getInventory().isFull()
-                && guildBankArea.contains(myPlayer())
+        if (inventoryFull
+                && inBank
                 && !getBank().isOpen())
             return State.OPEN_AND_USE_BANK;
-        if (getInventory().isFull()
-                && guildBankArea.contains(myPlayer())
+        if (inventoryFull
+                && inBank
                 && getBank().isOpen())
             return State.CLOSE_BANK;
         // Inventory NOT full, fishing states
-        if (!getInventory().isFull()
-                && !fishingDocksArea.contains(myPlayer())
+        if (!inventoryFull
+                && !onDock
                 && !getBank().isOpen())
             return State.WALK_TO_FISHING_SPOT;
-        if (!getInventory().isFull()
-                && fishingDocksArea.contains(myPlayer())
-                && !myPlayer().isAnimating())
+        if (!inventoryFull
+                && onDock
+                && !isAnimating)
             return State.FIND_FISHING_SPOT;
-        if (!getInventory().isFull()
-                && fishingDocksArea.contains(myPlayer())
-                && myPlayer().isAnimating())
+        if (!inventoryFull
+                && onDock
+                && isAnimating)
             return State.FISHING;
 		return State.WAITING;
     }
@@ -160,9 +161,11 @@ public class main extends Script {
         switch (getState()) {
             case WALK_TO_BANK:
                 state = "Walking to bank";
+                sleep(random(2000,6000)); // Don't notice immediately when your inventory is full, eh?
                 getWalking().webWalk(new Position(guildBankArea.getRandomPosition()));
                 break;
             case OPEN_AND_USE_BANK:
+                state = "Opening bank";
     			@SuppressWarnings("unchecked")
 				NPC bank = getNpcs().closest(new Filter<NPC>() {
                     @Override
@@ -170,7 +173,6 @@ public class main extends Script {
                         return (n.hasAction("Bank") && n.hasAction("Collect"));
                     }
                 });
-    			state = "Opening bank";
     			if (bank != null) {
     				if (bank.interact("Bank")) {
     					state = "Depositing items";
@@ -179,12 +181,12 @@ public class main extends Script {
     			}
                 break;
             case CLOSE_BANK:
+                state = "Closing bank";
     			getBank().depositAllExcept("Harpoon");
                 // @TODO - replace with conditionalSleep
     			while (getInventory().contains("Tuna") || getInventory().contains("Swordfish")) {
     				sleep(100);
     			}
-    			state = "Closing bank";
     			getBank().close();
                 break;
             case WALK_TO_FISHING_SPOT:
@@ -192,6 +194,7 @@ public class main extends Script {
     			getWalking().webWalk(new Position(fishingDocksArea.getRandomPosition()));
                 break;
             case FIND_FISHING_SPOT:
+                state = "Finding spot.";
     			@SuppressWarnings("unchecked")
 				NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
                     @Override
@@ -199,11 +202,12 @@ public class main extends Script {
                         return (n.hasAction("Cage") && n.hasAction("Harpoon"));
                     }
                 });
-    			state = "Finding spot.";
     			if (fishingSpot != null) {
+                    sleep(random(1000,3000)); // Be a little more human about your reaction time.
     				fishingSpot.interact("Harpoon");
                     // @TODO - could this be a conditionalSleep as well?
-    				sleep(2000); // time to run to the spot and interact with it
+                    state = "Allowing time to get fishin'.";
+    				sleep(random(5000,7000)); // time to run to the spot and interact with it
     				inventoryCount = getInventory().getEmptySlots();
     			}
                 break;
