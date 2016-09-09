@@ -2,9 +2,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 
+import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
-import org.osbot.rs07.api.map.constants.Banks;
 import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.api.model.RS2Object;
 import org.osbot.rs07.api.ui.Skill;
@@ -25,7 +25,7 @@ public class main extends Script {
 	private int fishCaught = 0;
 	private int lastMouseAction = 0;
 
-    private final Area fishingDocksArea = Area area = new Area(2599, 3425, 2600, 3420);
+    private final Area fishingDocksArea = new Area(2599, 3425, 2600, 3420);
 	private final Area guildBankArea = new Area(2585, 3422, 2588, 3418);
 
   private enum State {
@@ -34,7 +34,8 @@ public class main extends Script {
     CLOSE_BANK,
     WALK_TO_FISHING_SPOT,
     FIND_FISHING_SPOT,
-    FISHING
+    FISHING,
+    WAITING
 	}
 
     /**
@@ -130,24 +131,25 @@ public class main extends Script {
         if (getInventory().isFull()
                 && guildBankArea.contains(myPlayer())
                 && !getBank().isOpen())
-            return State.OPEN_AND_USE_BANK
+            return State.OPEN_AND_USE_BANK;
         if (getInventory().isFull()
                 && guildBankArea.contains(myPlayer())
                 && getBank().isOpen())
-            return State.CLOSE_BANK
+            return State.CLOSE_BANK;
         // Inventory NOT full, fishing states
         if (!getInventory().isFull()
                 && !fishingDocksArea.contains(myPlayer())
                 && !getBank().isOpen())
-            return State.WALK_TO_FISHING_SPOT
+            return State.WALK_TO_FISHING_SPOT;
         if (!getInventory().isFull()
                 && fishingDocksArea.contains(myPlayer())
                 && !myPlayer().isAnimating())
-            return State.FIND_FISHING_SPOT
+            return State.FIND_FISHING_SPOT;
         if (!getInventory().isFull()
                 && fishingDocksArea.contains(myPlayer())
                 && myPlayer().isAnimating())
-            return State.FISHING
+            return State.FISHING;
+		return State.WAITING;
     }
 
     /**
@@ -169,6 +171,7 @@ public class main extends Script {
     					sleep(1000);
     				}
     			}
+                break;
             case CLOSE_BANK:
     			getBank().depositAllExcept("Harpoon");
                 // @TODO - replace with conditionalSleep
@@ -177,23 +180,27 @@ public class main extends Script {
     			}
     			state = "Closing bank";
     			getBank().close();
+                break;
             case WALK_TO_FISHING_SPOT:
     			state = "Walking to fishing spots.";
     			getWalking().webWalk(new Position(fishingDocksArea.getRandomPosition()));
+                break;
             case FIND_FISHING_SPOT:
-    			NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
+    			@SuppressWarnings("unchecked")
+				NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
                     @Override
                     public boolean match(NPC n) {
                         return (n.hasAction("Cage") && n.hasAction("Harpoon"));
                     }
                 });
     			state = "Finding spot.";
-    			if (spot != null) {
-    				spot.interact("Harpoon");
+    			if (fishingSpot != null) {
+    				fishingSpot.interact("Harpoon");
                     // @TODO - could this be a conditionalSleep as well?
     				sleep(2000); // time to run to the spot and interact with it
     				inventoryCount = getInventory().getEmptySlots();
     			}
+                break;
             case FISHING:
 				state = "Catching fish.";
 				randomizeMouse(); // antiban
@@ -204,7 +211,12 @@ public class main extends Script {
 					inventoryCount = getInventory().getEmptySlots();
 					fishCaught += 1;
 				}
+                break;
+            default:
+                // I wouldn't expect to ever get here. It's prudent to add a default though.
+                state = "Unexpected condition. Waiting.";
 				sleep(1000);
         }
+        return random(200,300);
     } // end onLoop()
 } // end class main
