@@ -25,9 +25,8 @@ public class main extends Script {
 	private int fishCaught = 0;
 	private int lastMouseAction = 0;
 
-    // @TODO: Looks like the Position() objects here aren't necessary?
-    private final Area fishingDocksArea = new Area( new Position(@TODO - guild docks corner), new Position(@TODO guild docks corner));
-	private final Area guildBankArea = new Area( new Position(@TODO - guild bank corner), new Position(@TODO guild bank corner));
+    private final Area fishingDocksArea = Area area = new Area(2599, 3425, 2600, 3420);
+	private final Area guildBankArea = new Area(2585, 3422, 2588, 3418);
 
   private enum State {
 	WALK_TO_BANK,
@@ -182,10 +181,14 @@ public class main extends Script {
     			state = "Walking to fishing spots.";
     			getWalking().webWalk(new Position(fishingDocksArea.getRandomPosition()));
             case FIND_FISHING_SPOT:
-                // @TODO - How do we make sure to find only spots with our type of fishing?
-    			NPC spot = getNpcs().closest("Fishing spot");
+    			NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
+                    @Override
+                    public boolean match(NPC n) {
+                        return (n.hasAction("Cage") && n.hasAction("Harpoon"));
+                    }
+                });
     			state = "Finding spot.";
-    			if (spot != null && spot.hasAction("Harpoon")) {
+    			if (spot != null) {
     				spot.interact("Harpoon");
                     // @TODO - could this be a conditionalSleep as well?
     				sleep(2000); // time to run to the spot and interact with it
