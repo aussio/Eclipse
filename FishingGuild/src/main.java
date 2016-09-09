@@ -57,6 +57,7 @@ public class main extends Script {
 	public void onStart() {
 		getExperienceTracker().start(Skill.FISHING);
 		timeStart = System.currentTimeMillis();
+        fishCaught = 0;
 	}
 
 	@Override
@@ -80,25 +81,14 @@ public class main extends Script {
 		if (lastMouseAction > 4) {
 			int i = random(5);
 			switch (i) {
-			case 0:
-			case 1:
-				getMouse().moveOutsideScreen();
-				break;
-			case 2:
-				getMouse().moveRandomly();
-				break;
-			case 3:
-				getMouse().moveSlightly();
-				lastMouseAction = 3;
-				break;
-			case 4:
-				getMouse().moveVerySlightly();
-				break;
 			case 5:
 				getTabs().open(randomTab());
 				if (getTabs().getOpen() == Tab.SKILLS) {
 					getMouse().move(704, 283);
 				}
+            default:
+                getMouse().moveOutsideScreen();
+                break;
 			}
 
 			lastMouseAction = 0;
