@@ -237,3 +237,7 @@ public class main extends Script {
 //          - move mouse off screen like I'm AFK
 //          - check fishing xp
 //          - check inventory if not already on inv tab
+//
+// NEEDS:
+// @TODO - Banking needs to be even more specific to not click the unreachable people.
+// @TODO - Tighten up fishing spot selection to not click on the far dock
