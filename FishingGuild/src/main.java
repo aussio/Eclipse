@@ -1,10 +1,13 @@
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
 
 import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
+import org.osbot.rs07.api.model.Entity;
 import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.api.ui.Tab;
@@ -50,6 +53,21 @@ public class main extends Script {
         fishCaught = 0;
 	}
 
+	public void drawTile(Script script, Graphics g, Entity entity, Color tileColor, Color textColor, String s) {
+		Polygon polygon;
+		    if (entity != null && entity.exists() && (polygon = entity.getPosition().getPolygon(script.getBot(), entity.getPosition().getTileHeight(script.getBot()))) != null) {
+		        g.setColor(tileColor);
+		        for (int i = 0; i < polygon.npoints; i++) {
+		            g.setColor(new Color(0, 0, 0, 30));
+		            g.fillPolygon(polygon);
+		            g.setColor(tileColor);
+		            g.drawPolygon(polygon);
+		        }
+		        g.setColor(textColor);
+		        g.drawString(s, (int) polygon.getBounds().getX(), (int) polygon.getBounds().getY());
+		    }
+		}
+	
 	@Override
 	public void onPaint(Graphics2D g) {
 		long timeElapsed = System.currentTimeMillis() - timeStart;
@@ -65,8 +83,10 @@ public class main extends Script {
 		g.drawString("XP Gained: " + getExperienceTracker().getGainedXP(Skill.FISHING) + " (" + getExperienceTracker().getGainedLevels(Skill.FISHING) + ")", 8, 80);
 		g.drawString("Fish caught: " + fishCaught, 8, 95);
 		
-		g.setColor(Color.cyan);
-		//g.fillPolygon(fishingSpot);
+		// Highlight the fishing spot being used. Just kinda neat. :)
+		if (myPlayer().getInteracting() != null) {
+			drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.green, Color.white, "");
+		}
 	}
 
 	private void randomizeMouse() {
