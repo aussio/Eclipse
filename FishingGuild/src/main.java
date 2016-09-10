@@ -23,10 +23,10 @@ import org.osbot.rs07.utility.ConditionalSleep;
                 logo = "")
 public class main extends Script {
 	private long timeStart;
+	private long lastCheckedAntiban;
 	private String state = "Initializing..";
 	private int inventoryCount = 0;
 	private int fishCaught = 0;
-	private int lastMouseAction = 0;
 
     private final Area fishingDocksArea = new Area(2599, 3420, 2604, 3425);
 	private final Area guildBankArea = new Area(2591, 3419, 2586, 3418);
@@ -50,6 +50,7 @@ public class main extends Script {
 	public void onStart() {
 		getExperienceTracker().start(Skill.FISHING);
 		timeStart = System.currentTimeMillis();
+		lastCheckedAntiban = System.currentTimeMillis();
         fishCaught = 0;
 	}
 
@@ -84,48 +85,70 @@ public class main extends Script {
 		g.drawString("Fish caught: " + fishCaught, 8, 95);
 		
 		// Highlight the fishing spot being used. Just kinda neat. :)
-		if (myPlayer().getInteracting() != null) {
-			drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
-		}
+		//if (myPlayer().getInteracting() != null) {
+		//	drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
+		//}
 	}
 
-	private void randomizeMouse() {
-		lastMouseAction++;
-		if (lastMouseAction > 4) {
-			int i = random(5);
+	/**
+	 * Move the mouse upwards off the screen, but only if it isn't already off-screen.
+	 */
+	private void moveMouseOffScreen() {
+		if (getMouse().getPosition().y > 0) {
+			getMouse().move(random(100, 500), 0);
+		}
+	}
+	
+	private int getRandomCloseMouseX() {
+		int mouseXPosition = getMouse().getPosition().x;
+		return random(mouseXPosition-10, mouseXPosition+10);
+	}
+	
+	@SuppressWarnings("unused")
+	private int getRandomCloseMouseY() {
+		int mouseYPosition = getMouse().getPosition().y;
+		return random(mouseYPosition-10, mouseYPosition+10);
+	}
+	
+	/**
+	 * Nudge the mouse down onto the screen then back up, as if keeping the session awake.
+	 */
+	private void nudgeScreenAwake() {
+		getMouse().move(getRandomCloseMouseX(), random(110, 200));
+		getMouse().move(getRandomCloseMouseX(), 0);
+	}
+	
+	private void randomizeMouse() throws InterruptedException {
+		long now = System.currentTimeMillis();
+		long timeSinceLastAntiban = now - lastCheckedAntiban;
+		if (timeSinceLastAntiban > random(240000, 290000)) {
+			stateLogger("Antiban");
+			lastCheckedAntiban = now;
+			int i = random(2);
 			switch (i) {
-			case 5:
-				getTabs().open(randomTab());
-				if (getTabs().getOpen() == Tab.SKILLS) {
+			case 0:
+				if (getTabs().getOpen() != Tab.SKILLS) {
+					getTabs().open(Tab.SKILLS);
 					getMouse().move(704, 283);
+					sleep(random(1000,1500));
+					moveMouseOffScreen();
+					break;
+				} else {
+					nudgeScreenAwake();
+					break;
 				}
-            default:
-                getMouse().moveOutsideScreen();
-                break;
+			case 1:
+				if (getTabs().getOpen() != Tab.INVENTORY) {
+					getTabs().open(Tab.INVENTORY);
+					moveMouseOffScreen();
+					break;
+				} else {
+					nudgeScreenAwake();
+					break;
+				}
 			}
-
-			lastMouseAction = 0;
 		}
-	}
-
-	private Tab randomTab() {
-		int i = random(6);
-		switch(i) {
-		case 0:
-		case 1:
-			return Tab.INVENTORY;
-		case 2:
-			return Tab.EQUIPMENT;
-		case 3:
-			return Tab.ATTACK;
-		case 4:
-			return Tab.SKILLS;
-		case 5:
-			return Tab.FRIENDS;
-		case 6:
-			return Tab.QUEST;
-		}
-		return Tab.SKILLS;
+		moveMouseOffScreen();
 	}
 
 	/**
@@ -250,7 +273,7 @@ public class main extends Script {
                 break;
             case FISHING:
             	stateLogger("Catching fish.");
-				// randomizeMouse(); // antiban
+				randomizeMouse(); // antiban
                 // @TODO - instead of checking for anything in inventory, we should check for the addition of
                 // fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
                 // is in the inventory now for whatever reason (script paused, random, etc).
@@ -272,10 +295,6 @@ public class main extends Script {
 //		http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
 //			- Change gained levels to xp/hr
 //			- Add all sorts of nice information :)
-// @TODO - improve antiban
-//          - move mouse off screen like I'm AFK
-//          - check fishing xp
-//          - check inventory if not already on inv tab
 // @TODO - add fishing options
 // 		http://osbot.org/forum/topic/87731-explvs-dank-gui-tutorial/
 //			- lobsters
