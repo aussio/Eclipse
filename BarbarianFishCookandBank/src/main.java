@@ -17,8 +17,8 @@ import org.osbot.rs07.utility.ConditionalSleep;
 
 
 @ScriptManifest(author = "Jython",
-                info = "Simple Fishing Guild fisher.",
-                name = "Fishing Guild Sharks",
+                info = "Fishes Trout/Salmon at Barbarian Village, cooks them, then banks the fish.",
+                name = "Barb. Village Fish n' Cook",
                 version = 1.0,
                 logo = "")
 public class main extends Script {
@@ -28,8 +28,11 @@ public class main extends Script {
 	private int inventoryCount = 0;
 	private int fishCaught = 0;
 
-    private final Area fishingDocksArea = new Area(2599, 3420, 2604, 3425);
-	private final Area guildBankArea = new Area(2591, 3419, 2586, 3418);
+	private final Area northFishingArea = new Area(3106, 3436, 3110, 3430);
+	private final Area southFishingArea = new Area(3104, 3422, 3101, 3426);
+    private final Area[] fishingAreas = { northFishingArea,
+    									  southFishingArea};
+	private final Area bankArea = new Area(3094, 3488, 3092, 3492);
 
   private enum State {
 	WALK_TO_BANK,
@@ -38,6 +41,7 @@ public class main extends Script {
     WALK_TO_FISHING_SPOT,
     FIND_FISHING_SPOT,
     FISHING,
+    COOKING,
     WAITING
 	}
 
@@ -178,7 +182,16 @@ public class main extends Script {
 			log("State updated to: " + state);
 		}
 	}
-    /**
+	
+	private Boolean inFishingAreas() {
+		for (Area a : fishingAreas) {
+			if (a.contains(myPlayer()))
+				return true;
+		}
+		return false;
+	}
+	
+	/**
     * Gets the current state of the player.
     * This method is intended to be run on every iteration of the onLoop() method to determine
     * what actions needs to be performed.
@@ -187,10 +200,15 @@ public class main extends Script {
     */
     private State getState() {
     	Boolean inventoryFull = getInventory().isFull();
-    	Boolean inBank = guildBankArea.contains(myPlayer());
-    	Boolean onDock = fishingDocksArea.contains(myPlayer());
+    	Boolean inBank = bankArea.contains(myPlayer());
+    	Boolean inFishingArea = inFishingAreas();
     	Boolean isAnimating = myPlayer().isAnimating();
-    	// Inventory full, banking states
+    	Boolean hasRawFish = (getInventory().contains("Raw trout")
+    						  || getInventory().contains("Raw salmon"));
+    	// Inventory full, banking and cooking states
+    	if (inventoryFull
+    			&& hasRawFish)
+    		return State.COOKING;
         if (inventoryFull
                 && !inBank
                 && !getBank().isOpen())
@@ -204,15 +222,15 @@ public class main extends Script {
             return State.USE_AND_CLOSE_BANK;
         // Inventory NOT full, fishing states
         if (!inventoryFull
-                && !onDock
+                && !inFishingArea
                 && !getBank().isOpen())
             return State.WALK_TO_FISHING_SPOT;
         if (!inventoryFull
-                && onDock
+                && inFishingArea
                 && !isAnimating)
             return State.FIND_FISHING_SPOT;
         if (!inventoryFull
-                && onDock
+                && inFishingArea
                 && isAnimating)
             return State.FISHING;
 		return State.WAITING;
@@ -227,18 +245,20 @@ public class main extends Script {
             case WALK_TO_BANK:
             	stateLogger("Walking to bank");
                 sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
-                getWalking().webWalk(new Position(guildBankArea.getRandomPosition()));
+                getWalking().webWalk(new Position(bankArea.getRandomPosition()));
                 break;
             case OPEN_BANK:
             	openBank();
                 break;
             case USE_AND_CLOSE_BANK:
             	stateLogger("Depositing items");
-    			getBank().depositAllExcept("Harpoon");
+    			getBank().depositAllExcept("Fly fishing rod", "Feather");
     			new ConditionalSleep(5000) {
     				@Override
     				public boolean condition() throws InterruptedException {
-    					return (!getInventory().contains("Shark"));
+    					return (!getInventory().contains("Burnt fish")
+    							&& !getInventory().contains("Trout")
+    							&& !getInventory().contains("Salmon"));
     				}
     			}.sleep();
     			stateLogger("Closing bank");
@@ -246,7 +266,7 @@ public class main extends Script {
                 break;
             case WALK_TO_FISHING_SPOT:
             	stateLogger("Walking to fishing spots.");
-    			getWalking().webWalk(new Position(fishingDocksArea.getRandomPosition()));
+    			getWalking().webWalk(new Position(northFishingArea.getRandomPosition()));
                 break;
             case FIND_FISHING_SPOT:
             	stateLogger("Finding spot.");
@@ -254,14 +274,12 @@ public class main extends Script {
 				NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
                     @Override
                     public boolean match(NPC n) {
-                        return (n.hasAction("Net")
-                        		&& n.hasAction("Harpoon")
-                        		&& n.getPosition().getY() > 3418); // And we're on the northern dock
+                        return (n.hasAction("Lure"));
                     }
                 });
     			if (fishingSpot != null) {
                     sleep(random(1000,3000)); // Be a little more human about your reaction time.
-    				fishingSpot.interact("Harpoon");
+    				fishingSpot.interact("Lure");
     				inventoryCount = getInventory().getEmptySlots();
     				new ConditionalSleep(5000) {
     					@Override
@@ -277,11 +295,15 @@ public class main extends Script {
                 // @TODO - instead of checking for anything in inventory, we should check for the addition of
                 // fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
                 // is in the inventory now for whatever reason (script paused, random, etc).
-				if (getInventory().getEmptySlots() != inventoryCount && fishingDocksArea.contains(myPlayer())) {
+				if (getInventory().getEmptySlots() != inventoryCount && inFishingAreas()) {
 					inventoryCount = getInventory().getEmptySlots();
 					fishCaught += 1;
 				}
                 break;
+            case COOKING:
+            	stateLogger("Cooking.");
+            	// fire = id 26185
+            	stop();
             default:
                 // I wouldn't expect to ever get here. It's prudent to add a default though.
             	stateLogger("Unexpected condition. Waiting.");
@@ -295,11 +317,3 @@ public class main extends Script {
 //		http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
 //			- Change gained levels to xp/hr
 //			- Add all sorts of nice information :)
-// @TODO - add fishing options
-// 		http://osbot.org/forum/topic/87731-explvs-dank-gui-tutorial/
-//			- lobsters
-//			- swordfish/tuna
-//			- sharks
-// @TODO - improve areas
-//			- Using some of the drawing snippets, fill in the area that is defined to check that it covers
-//			  what it needs to cover. With that assurance, make the bank and dock more precise.
