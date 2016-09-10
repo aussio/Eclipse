@@ -10,11 +10,12 @@ import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.api.ui.Tab;
 import org.osbot.rs07.script.Script;
 import org.osbot.rs07.script.ScriptManifest;
+import org.osbot.rs07.utility.ConditionalSleep;
 
 
 @ScriptManifest(author = "Jython",
-                info = "Simple Fishing Guild fishing script.",
-                name = "Simple Fishing Guild Fisher",
+                info = "Simple Fishing Guild fisher.",
+                name = "Fishing Guild",
                 version = 1.0,
                 logo = "")
 public class main extends Script {
@@ -29,7 +30,7 @@ public class main extends Script {
 
   private enum State {
 	WALK_TO_BANK,
-    OPEN_AND_USE_BANK,
+	OPEN_BANK,
     CLOSE_BANK,
     WALK_TO_FISHING_SPOT,
     FIND_FISHING_SPOT,
@@ -63,6 +64,9 @@ public class main extends Script {
 		g.drawString("Time Running: " + (hours >= 10 ? "" + hours : "0" + hours) + ":" + (minutes >= 10 ? "" + minutes : "0" + minutes) + ":" + (seconds >= 10 ? "" + seconds : "0" + seconds), 8, 65);
 		g.drawString("XP Gained: " + getExperienceTracker().getGainedXP(Skill.FISHING) + " (" + getExperienceTracker().getGainedLevels(Skill.FISHING) + ")", 8, 80);
 		g.drawString("Fish caught: " + fishCaught, 8, 95);
+		
+		g.setColor(Color.cyan);
+		//g.fillPolygon(fishingSpot);
 	}
 
 	private void randomizeMouse() {
@@ -104,6 +108,23 @@ public class main extends Script {
 		return Tab.SKILLS;
 	}
 
+	/**
+	 * Gets the nearest bank to the player and opens it.
+	 * Waits up to 5-seconds for the bank to open and cuts the wait short when the bank opens.
+	 * 
+	 * @throws InterruptedException
+	 */
+	private void openBank() throws InterruptedException {
+		getBank().open();
+		new ConditionalSleep(5000) {
+			@Override
+			public boolean condition() throws InterruptedException {
+				return getBank().isOpen();
+			}
+		}.sleep();
+		log("Opening Bank");
+	}
+	
     /**
     * Gets the current state of the player.
     * This method is intended to be run on every iteration of the onLoop() method to determine
@@ -117,14 +138,7 @@ public class main extends Script {
     	Boolean inBank = guildBankArea.contains(myPlayer());
     	Boolean onDock = fishingDocksArea.contains(myPlayer());
     	Boolean isAnimating = myPlayer().isAnimating();
-    	/* Debug stuff
-    	String states = String.format("inventoryFull: %1$B"
-    			+ "\n inBank: %2$B"
-    			+ "\n onDock: %3$B"
-    			+ "\n isAnimating: %4$B",
-    			inventoryFull, inBank, onDock, isAnimating);
-    	log(states);
-    	*/
+    	
         if (inventoryFull
                 && !inBank
                 && !getBank().isOpen())
@@ -132,7 +146,7 @@ public class main extends Script {
         if (inventoryFull
                 && inBank
                 && !getBank().isOpen())
-            return State.OPEN_AND_USE_BANK;
+            return State.OPEN_BANK;
         if (inventoryFull
                 && inBank
                 && getBank().isOpen())
@@ -161,32 +175,20 @@ public class main extends Script {
         switch (getState()) {
             case WALK_TO_BANK:
                 state = "Walking to bank";
-                sleep(random(2000,6000)); // Don't notice immediately when your inventory is full, eh?
+                sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
                 getWalking().webWalk(new Position(guildBankArea.getRandomPosition()));
                 break;
-            case OPEN_AND_USE_BANK:
-                state = "Opening bank";
-    			@SuppressWarnings("unchecked")
-				NPC bank = getNpcs().closest(new Filter<NPC>() {
-                    @Override
-                    public boolean match(NPC n) {
-                        return (n.hasAction("Bank") && n.hasAction("Collect"));
-                    }
-                });
-    			if (bank != null) {
-    				if (bank.interact("Bank")) {
-    					state = "Depositing items";
-    					sleep(1000);
-    				}
-    			}
+            case OPEN_BANK:
+            	openBank();
                 break;
             case CLOSE_BANK:
-                state = "Closing bank";
+                state = "Depositing items";
     			getBank().depositAllExcept("Harpoon");
                 // @TODO - replace with conditionalSleep
     			while (getInventory().contains("Tuna") || getInventory().contains("Swordfish")) {
     				sleep(100);
     			}
+    			state = "Closing bank";
     			getBank().close();
                 break;
             case WALK_TO_FISHING_SPOT:
@@ -199,7 +201,9 @@ public class main extends Script {
 				NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
                     @Override
                     public boolean match(NPC n) {
-                        return (n.hasAction("Cage") && n.hasAction("Harpoon"));
+                        return (n.hasAction("Cage")
+                        		&& n.hasAction("Harpoon")
+                        		&& n.getPosition().getY() > 3418); // And we're on the northern dock
                     }
                 });
     			if (fishingSpot != null) {
@@ -207,7 +211,7 @@ public class main extends Script {
     				fishingSpot.interact("Harpoon");
                     // @TODO - could this be a conditionalSleep as well?
                     state = "Allowing time to get fishin'.";
-    				sleep(random(5000,7000)); // time to run to the spot and interact with it
+    				sleep(random(3000,5000)); // time to run to the spot and interact with it
     				inventoryCount = getInventory().getEmptySlots();
     			}
                 break;
@@ -237,7 +241,3 @@ public class main extends Script {
 //          - move mouse off screen like I'm AFK
 //          - check fishing xp
 //          - check inventory if not already on inv tab
-//
-// NEEDS:
-// @TODO - Banking needs to be even more specific to not click the unreachable people.
-// @TODO - Tighten up fishing spot selection to not click on the far dock
