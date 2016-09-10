@@ -18,7 +18,7 @@ import org.osbot.rs07.utility.ConditionalSleep;
 
 @ScriptManifest(author = "Jython",
                 info = "Simple Fishing Guild fisher.",
-                name = "Fishing Guild",
+                name = "Fishing Guild Sharks",
                 version = 1.0,
                 logo = "")
 public class main extends Script {
@@ -145,6 +145,16 @@ public class main extends Script {
 		log("Opening Bank");
 	}
 	
+	/**
+	 * If the state has changed, log it and update the state attribute for the paint.
+	 * @param newState - A string representing the current state of the player.
+	 */
+	private void stateLogger(String newState) {
+		if (state != newState) {
+			state = newState;
+			log("State updated to: " + state);
+		}
+	}
     /**
     * Gets the current state of the player.
     * This method is intended to be run on every iteration of the onLoop() method to determine
@@ -153,12 +163,11 @@ public class main extends Script {
     * @return   State   the State that the player is in
     */
     private State getState() {
-        // Inventory full, banking states
     	Boolean inventoryFull = getInventory().isFull();
     	Boolean inBank = guildBankArea.contains(myPlayer());
     	Boolean onDock = fishingDocksArea.contains(myPlayer());
     	Boolean isAnimating = myPlayer().isAnimating();
-    	
+    	// Inventory full, banking states
         if (inventoryFull
                 && !inBank
                 && !getBank().isOpen())
@@ -193,7 +202,7 @@ public class main extends Script {
 	public int onLoop() throws InterruptedException {
         switch (getState()) {
             case WALK_TO_BANK:
-                state = "Walking to bank";
+            	stateLogger("Walking to bank");
                 sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
                 getWalking().webWalk(new Position(guildBankArea.getRandomPosition()));
                 break;
@@ -201,28 +210,28 @@ public class main extends Script {
             	openBank();
                 break;
             case USE_AND_CLOSE_BANK:
-                state = "Depositing items";
+            	stateLogger("Depositing items");
     			getBank().depositAllExcept("Harpoon");
     			new ConditionalSleep(5000) {
     				@Override
     				public boolean condition() throws InterruptedException {
-    					return (!getInventory().contains("Tuna") && !getInventory().contains("Swordfish"));
+    					return (!getInventory().contains("Shark"));
     				}
     			}.sleep();
-    			state = "Closing bank";
+    			stateLogger("Closing bank");
     			getBank().close();
                 break;
             case WALK_TO_FISHING_SPOT:
-    			state = "Walking to fishing spots.";
+            	stateLogger("Walking to fishing spots.");
     			getWalking().webWalk(new Position(fishingDocksArea.getRandomPosition()));
                 break;
             case FIND_FISHING_SPOT:
-                state = "Finding spot.";
+            	stateLogger("Finding spot.");
     			@SuppressWarnings("unchecked")
 				NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
                     @Override
                     public boolean match(NPC n) {
-                        return (n.hasAction("Cage")
+                        return (n.hasAction("Net")
                         		&& n.hasAction("Harpoon")
                         		&& n.getPosition().getY() > 3418); // And we're on the northern dock
                     }
@@ -240,8 +249,8 @@ public class main extends Script {
     			}
                 break;
             case FISHING:
-				state = "Catching fish.";
-				randomizeMouse(); // antiban
+            	stateLogger("Catching fish.");
+				// randomizeMouse(); // antiban
                 // @TODO - instead of checking for anything in inventory, we should check for the addition of
                 // fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
                 // is in the inventory now for whatever reason (script paused, random, etc).
@@ -252,7 +261,7 @@ public class main extends Script {
                 break;
             default:
                 // I wouldn't expect to ever get here. It's prudent to add a default though.
-                state = "Unexpected condition. Waiting.";
+            	stateLogger("Unexpected condition. Waiting.");
 				sleep(1000);
         }
         return random(200,300);
