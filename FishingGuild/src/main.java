@@ -29,7 +29,7 @@ public class main extends Script {
 	private int lastMouseAction = 0;
 
     private final Area fishingDocksArea = new Area(2599, 3420, 2604, 3425);
-	private final Area guildBankArea = new Area(2585, 3422, 2588, 3418);
+	private final Area guildBankArea = new Area(2591, 3419, 2586, 3418);
 
   private enum State {
 	WALK_TO_BANK,
@@ -207,7 +207,7 @@ public class main extends Script {
     			new ConditionalSleep(5000) {
     				@Override
     				public boolean condition() throws InterruptedException {
-    					return (getInventory().contains("Tuna") || getInventory().contains("Swordfish"));
+    					return (!getInventory().contains("Tuna") && !getInventory().contains("Swordfish"));
     				}
     			}.sleep();
     			state = "Closing bank";
@@ -232,6 +232,12 @@ public class main extends Script {
                     sleep(random(1000,3000)); // Be a little more human about your reaction time.
     				fishingSpot.interact("Harpoon");
     				inventoryCount = getInventory().getEmptySlots();
+    				new ConditionalSleep(5000) {
+    					@Override
+    					public boolean condition() throws InterruptedException {
+    						return myPlayer().isAnimating();
+    					}
+        			}.sleep();
     			}
                 break;
             case FISHING:
@@ -254,9 +260,16 @@ public class main extends Script {
     } // end onLoop()
 } // end class main
 
-// @TODO - Paint variables need to reset between runs
-// @TODO - Change gained levels to xp/hr
+// @TODO - improve paint
+// http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
+//			- Change gained levels to xp/hr
+//			- Add all sorts of nice information :)
 // @TODO - improve antiban
 //          - move mouse off screen like I'm AFK
 //          - check fishing xp
 //          - check inventory if not already on inv tab
+// @TODO - add fishing options
+// http://osbot.org/forum/topic/87731-explvs-dank-gui-tutorial/
+//			- lobsters
+//			- swordfish/tuna
+//			- sharks
