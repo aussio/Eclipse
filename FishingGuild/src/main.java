@@ -58,7 +58,7 @@ public class main extends Script {
 		    if (entity != null && entity.exists() && (polygon = entity.getPosition().getPolygon(script.getBot(), entity.getPosition().getTileHeight(script.getBot()))) != null) {
 		        g.setColor(tileColor);
 		        for (int i = 0; i < polygon.npoints; i++) {
-		            g.setColor(new Color(0, 0, 0, 30));
+		            g.setColor(new Color(0, 0, 0, 20));
 		            g.fillPolygon(polygon);
 		            g.setColor(tileColor);
 		            g.drawPolygon(polygon);
@@ -85,7 +85,7 @@ public class main extends Script {
 		
 		// Highlight the fishing spot being used. Just kinda neat. :)
 		if (myPlayer().getInteracting() != null) {
-			drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.green, Color.white, "");
+			drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
 		}
 	}
 
@@ -204,10 +204,12 @@ public class main extends Script {
             case CLOSE_BANK:
                 state = "Depositing items";
     			getBank().depositAllExcept("Harpoon");
-                // @TODO - replace with conditionalSleep
-    			while (getInventory().contains("Tuna") || getInventory().contains("Swordfish")) {
-    				sleep(100);
-    			}
+    			new ConditionalSleep(5000) {
+    				@Override
+    				public boolean condition() throws InterruptedException {
+    					return (getInventory().contains("Tuna") || getInventory().contains("Swordfish"));
+    				}
+    			}.sleep();
     			state = "Closing bank";
     			getBank().close();
                 break;
@@ -229,9 +231,6 @@ public class main extends Script {
     			if (fishingSpot != null) {
                     sleep(random(1000,3000)); // Be a little more human about your reaction time.
     				fishingSpot.interact("Harpoon");
-                    // @TODO - could this be a conditionalSleep as well?
-                    state = "Allowing time to get fishin'.";
-    				sleep(random(3000,5000)); // time to run to the spot and interact with it
     				inventoryCount = getInventory().getEmptySlots();
     			}
                 break;
