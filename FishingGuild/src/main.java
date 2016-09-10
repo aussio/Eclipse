@@ -34,7 +34,7 @@ public class main extends Script {
   private enum State {
 	WALK_TO_BANK,
 	OPEN_BANK,
-    CLOSE_BANK,
+	USE_AND_CLOSE_BANK,
     WALK_TO_FISHING_SPOT,
     FIND_FISHING_SPOT,
     FISHING,
@@ -168,9 +168,8 @@ public class main extends Script {
                 && !getBank().isOpen())
             return State.OPEN_BANK;
         if (inventoryFull
-                && inBank
                 && getBank().isOpen())
-            return State.CLOSE_BANK;
+            return State.USE_AND_CLOSE_BANK;
         // Inventory NOT full, fishing states
         if (!inventoryFull
                 && !onDock
@@ -201,7 +200,7 @@ public class main extends Script {
             case OPEN_BANK:
             	openBank();
                 break;
-            case CLOSE_BANK:
+            case USE_AND_CLOSE_BANK:
                 state = "Depositing items";
     			getBank().depositAllExcept("Harpoon");
     			new ConditionalSleep(5000) {
@@ -261,7 +260,7 @@ public class main extends Script {
 } // end class main
 
 // @TODO - improve paint
-// http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
+//		http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
 //			- Change gained levels to xp/hr
 //			- Add all sorts of nice information :)
 // @TODO - improve antiban
@@ -269,7 +268,10 @@ public class main extends Script {
 //          - check fishing xp
 //          - check inventory if not already on inv tab
 // @TODO - add fishing options
-// http://osbot.org/forum/topic/87731-explvs-dank-gui-tutorial/
+// 		http://osbot.org/forum/topic/87731-explvs-dank-gui-tutorial/
 //			- lobsters
 //			- swordfish/tuna
 //			- sharks
+// @TODO - improve areas
+//			- Using some of the drawing snippets, fill in the area that is defined to check that it covers
+//			  what it needs to cover. With that assurance, make the bank and dock more precise.
