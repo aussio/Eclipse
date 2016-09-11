@@ -362,9 +362,11 @@ public class main extends Script {
 //		http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
 //			- Change gained levels to xp/hr
 //			- Add all sorts of nice information :)
-// @TODO - add fishing options
+// @TODO - add fishing options (and debug option?)
 // 		http://osbot.org/forum/topic/87731-explvs-dank-gui-tutorial/
 //			- lobsters
 //			- swordfish/tuna
 //			- sharks
 // @TODO - If you take long enough to find a spot, check the other dock.
+// @TODO - If you don't have the fishing item (pot, harpoon) then withdraw one from the bank.
+//				 If there's not one in the bank, log out and log that.

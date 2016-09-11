@@ -295,7 +295,7 @@ public class main extends Script {
 		}.sleep();
     }
     
-    private void cookOnFire(RS2Object fire, final String fish) {
+    private void cookOnFire(RS2Object fire, final String fish) throws InterruptedException {
         if (fire != null) {
         	stateLogger("Using fire.");
         	fire.interact("Use");
@@ -308,7 +308,8 @@ public class main extends Script {
     		}.sleep();
     		widgets.get(307, 4).interact("Cook All");
 			stateLogger("Cooking " + fish);
-    		new ConditionalSleep(0000) {
+			sleep(1000); // Allow a second to get out of the cooking dialogue
+    		new ConditionalSleep(30000) {
     			@Override
     			public boolean condition() throws InterruptedException {
     				return (!getInventory().contains(fish)
