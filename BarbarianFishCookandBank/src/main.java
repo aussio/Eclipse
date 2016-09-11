@@ -9,6 +9,8 @@ import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Entity;
 import org.osbot.rs07.api.model.NPC;
+import org.osbot.rs07.api.model.RS2Object;
+import org.osbot.rs07.api.ui.RS2Widget;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.api.ui.Tab;
 import org.osbot.rs07.script.Script;
@@ -33,6 +35,8 @@ public class main extends Script {
     private final Area[] fishingAreas = { northFishingArea,
     									  southFishingArea};
 	private final Area bankArea = new Area(3094, 3488, 3092, 3492);
+	private final String[] rawFishTypes = {"Raw trout", "Raw salmon"};
+	private final String[] cookedFishTypes = {"Trout", "Salmon"};
 
   private enum State {
 	WALK_TO_BANK,
@@ -236,6 +240,27 @@ public class main extends Script {
 		return State.WAITING;
     }
 
+    private void useItem(String item) {
+		inventory.interact("Use", item);
+		new ConditionalSleep(5000) {
+			@Override
+			public boolean condition() throws InterruptedException {
+				return getInventory().isItemSelected();			    			}
+		}.sleep();
+    }
+    
+    private void useFire(RS2Object fire, final RS2Widget widget) {
+        if (fire != null) {
+        	fire.interact("Use");
+    		new ConditionalSleep(5000) {
+    			@Override
+    			public boolean condition() throws InterruptedException {
+    				return (widget != null && widget.isVisible());
+    			}
+    		}.sleep();
+        }
+    }
+    
     /**
     * A loop that continually runs, checking the State of the player and taking action accordingly.
     */
@@ -257,8 +282,7 @@ public class main extends Script {
     				@Override
     				public boolean condition() throws InterruptedException {
     					return (!getInventory().contains("Burnt fish")
-    							&& !getInventory().contains("Trout")
-    							&& !getInventory().contains("Salmon"));
+    							&& !getInventory().contains(cookedFishTypes));
     				}
     			}.sleep();
     			stateLogger("Closing bank");
@@ -302,8 +326,24 @@ public class main extends Script {
                 break;
             case COOKING:
             	stateLogger("Cooking.");
-            	// fire = id 26185
-            	stop();
+            	RS2Object fire = getObjects().closest(26185);
+                RS2Widget cookMenu = widgets.get(307, 4);
+                
+            	for (final String fish : rawFishTypes) {
+            		if (getInventory().contains(fish))
+            			// click on the raw fish in the inventory
+            			useItem(fish);
+            			// use fish on fire
+            			useFire(fire, cookMenu);
+            			cookMenu.interact("Cook All");
+                		new ConditionalSleep(5000) {
+                			@Override
+                			public boolean condition() throws InterruptedException {
+                				return (!getInventory().contains(fish));
+                			}
+                		}.sleep();
+            	}
+                break;
             default:
                 // I wouldn't expect to ever get here. It's prudent to add a default though.
             	stateLogger("Unexpected condition. Waiting.");
