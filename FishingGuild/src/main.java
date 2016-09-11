@@ -22,14 +22,51 @@ import org.osbot.rs07.utility.ConditionalSleep;
                 version = 1.0,
                 logo = "")
 public class main extends Script {
+	private final Boolean DEBUG = false;
 	private long timeStart;
 	private long lastCheckedAntiban;
 	private String state = "Initializing..";
 	private int inventoryCount = 0;
 	private int fishCaught = 0;
-
-    private final Area fishingDocksArea = new Area(2599, 3420, 2604, 3425);
-	private final Area guildBankArea = new Area(2591, 3419, 2586, 3418);
+	// Perfect northern fishing dock area. :)
+    private final Area fishingDocksArea = new Area(
+    		new int[][]{
+    				{2600, 3426},
+    				{2605, 3426},
+    				{2605, 3424},
+    				{2601, 3424},
+    				{2601, 3422},
+    				{2605, 3422},
+    				{2605, 3420},
+    				{2602, 3420},
+    				{2602, 3421},
+    				{2601, 3421},
+    				{2601, 3420},
+    				{2599, 3420},
+    				{2599, 3424},
+    				{2600, 3424}
+    			}
+    		);
+    private final Area northernFishingSpots = new Area(2598, 3419, 2605, 3426);
+    // Perfect guild bank area. :)
+	private final Area guildBankArea = new Area(
+			new int[][]{
+					{2586, 3418},
+					{2586, 3423},
+					{2588, 3423},
+					{2588, 3422},
+					{2590, 3422},
+					{2590, 3421},
+					{2589, 3421},
+					{2589, 3420},
+					{2592, 3420},
+					{2592, 3417},
+					{2588, 3417},
+					{2588, 3418}
+				}
+			);
+	// Only useful to instantiate here for debug paint.
+	private Position bankDestination;
 
   private enum State {
 	WALK_TO_BANK,
@@ -69,6 +106,21 @@ public class main extends Script {
 		    }
 		}
 	
+	public void drawTile(Script script, Graphics g, Position position, Color tileColor, Color textColor, String s) {
+		Polygon polygon;
+		    if (position != null && (polygon = position.getPolygon(script.getBot(), position.getTileHeight(script.getBot()))) != null) {
+		        g.setColor(tileColor);
+		        for (int i = 0; i < polygon.npoints; i++) {
+		            g.setColor(new Color(0, 0, 0, 20));
+		            g.fillPolygon(polygon);
+		            g.setColor(tileColor);
+		            g.drawPolygon(polygon);
+		        }
+		        g.setColor(textColor);
+		        g.drawString(s, (int) polygon.getBounds().getX(), (int) polygon.getBounds().getY());
+		    }
+		}
+	
 	@Override
 	public void onPaint(Graphics2D g) {
 		long timeElapsed = System.currentTimeMillis() - timeStart;
@@ -85,8 +137,21 @@ public class main extends Script {
 		g.drawString("Fish caught: " + fishCaught, 8, 95);
 		
 		// Highlight the fishing spot being used. Just kinda neat. :)
+		Script script = client.getBot().getScriptExecutor().getCurrent();
 		if (myPlayer().getInteracting() != null) {
-			drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
+			drawTile(script, g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
+		}
+		
+		// DEBUG: Draw bank, bankDestination, and fishing areas.
+		if (DEBUG == true) {
+			for (Position p : guildBankArea.getPositions() ) {
+				drawTile(script, g, p, Color.green, Color.white, "");
+			}
+			for (Position p : fishingDocksArea.getPositions() ) {
+				drawTile(script, g, p, Color.pink, Color.white, "");
+			}
+			if (bankDestination != null)
+				drawTile(script, g, bankDestination, Color.red, Color.white, "");
 		}
 	}
 
@@ -227,9 +292,11 @@ public class main extends Script {
             case WALK_TO_BANK:
             	stateLogger("Walking to bank");
                 sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
-                getWalking().webWalk(new Position(guildBankArea.getRandomPosition()));
+                bankDestination = new Position(guildBankArea.getRandomPosition());
+                getWalking().webWalk(bankDestination);
                 break;
             case OPEN_BANK:
+            	bankDestination = null;
             	openBank();
                 break;
             case USE_AND_CLOSE_BANK:
@@ -256,7 +323,7 @@ public class main extends Script {
                     public boolean match(NPC n) {
                         return (n.hasAction("Net")
                         		&& n.hasAction("Harpoon")
-                        		&& n.getPosition().getY() > 3418); // And we're on the northern dock
+                        		&& northernFishingSpots.contains(n.getPosition())); // And we're on the northern dock
                     }
                 });
     			if (fishingSpot != null) {
@@ -300,6 +367,4 @@ public class main extends Script {
 //			- lobsters
 //			- swordfish/tuna
 //			- sharks
-// @TODO - improve areas
-//			- Using some of the drawing snippets, fill in the area that is defined to check that it covers
-//			  what it needs to cover. With that assurance, make the bank and dock more precise.
+// @TODO - If you take long enough to find a spot, check the other dock.
