@@ -24,6 +24,7 @@ import org.osbot.rs07.utility.ConditionalSleep;
                 version = 1.0,
                 logo = "")
 public class main extends Script {
+	private final Boolean DEBUG = false;
 	private long timeStart;
 	private long lastCheckedAntiban;
 	private String state = "Initializing..";
@@ -62,9 +63,42 @@ public class main extends Script {
         fishCaught = 0;
 	}
 
+	/**
+	 * 
+	 * @param script	Most likely: client.getBot().getScriptExecutor().getCurrent()
+	 * @param g			The Graphics2D object passed into the onPaint() method
+	 * @param entity	The Entity whose tile you wish to draw on.
+	 * @param tileColor	The color that will be drawn around the border of the tile
+	 * @param textColor	The color of the text for the "s" parameter
+	 * @param s			The text you wish to display next to the tile.
+	 * 					Particularly useful if it's a property of the Entity passed in.
+	 */
 	public void drawTile(Script script, Graphics g, Entity entity, Color tileColor, Color textColor, String s) {
 		Polygon polygon;
 		    if (entity != null && entity.exists() && (polygon = entity.getPosition().getPolygon(script.getBot(), entity.getPosition().getTileHeight(script.getBot()))) != null) {
+		        g.setColor(tileColor);
+		        for (int i = 0; i < polygon.npoints; i++) {
+		            g.setColor(new Color(0, 0, 0, 20));
+		            g.fillPolygon(polygon);
+		            g.setColor(tileColor);
+		            g.drawPolygon(polygon);
+		        }
+		        g.setColor(textColor);
+		        g.drawString(s, (int) polygon.getBounds().getX(), (int) polygon.getBounds().getY());
+		    }
+		}
+	/**
+	 * 
+	 * @param script	Most likely: client.getBot().getScriptExecutor().getCurrent()
+	 * @param g			The Graphics2D object passed into the onPaint() method
+	 * @param position	The Position for the tile you are wishing to draw on
+	 * @param tileColor	The color that will be drawn around the border of the tile
+	 * @param textColor	The color of the text for the "s" parameter
+	 * @param s			The text you wish to display next to the tile, if any.
+	 */
+	public void drawTile(Script script, Graphics g, Position position, Color tileColor, Color textColor, String s) {
+		Polygon polygon;
+		    if (position != null && (polygon = position.getPolygon(script.getBot(), position.getTileHeight(script.getBot()))) != null) {
 		        g.setColor(tileColor);
 		        for (int i = 0; i < polygon.npoints; i++) {
 		            g.setColor(new Color(0, 0, 0, 20));
@@ -92,9 +126,22 @@ public class main extends Script {
 		g.drawString("XP Gained: " + getExperienceTracker().getGainedXP(Skill.FISHING) + " (" + getExperienceTracker().getGainedLevels(Skill.FISHING) + ")", 8, 80);
 		g.drawString("Fish caught: " + fishCaught, 8, 95);
 		
+		Script script = client.getBot().getScriptExecutor().getCurrent();
 		// Highlight the fishing spot being used. Just kinda neat. :)
 		if (myPlayer().getInteracting() != null) {
 			drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
+		}
+		
+		// DEBUG: Draw bank, bankDestination, and fishing areas.
+		if (DEBUG == true) {
+			for (Position p : bankArea.getPositions() ) {
+				drawTile(script, g, p, Color.green, Color.white, "");
+			}
+			for (Area fishingArea : fishingAreas) {
+				for (Position p : fishingArea.getPositions() ) {
+					drawTile(script, g, p, Color.pink, Color.white, "");
+				}
+			}
 		}
 	}
 
@@ -207,8 +254,7 @@ public class main extends Script {
     	Boolean inBank = bankArea.contains(myPlayer());
     	Boolean inFishingArea = inFishingAreas();
     	Boolean isAnimating = myPlayer().isAnimating();
-    	Boolean hasRawFish = (getInventory().contains("Raw trout")
-    						  || getInventory().contains("Raw salmon"));
+    	Boolean hasRawFish = (getInventory().contains(rawFishTypes));
     	// Inventory full, banking and cooking states
     	if (inventoryFull
     			&& hasRawFish)
@@ -241,7 +287,8 @@ public class main extends Script {
     }
 
     private void useItem(String item) {
-		inventory.interact("Use", item);
+    	stateLogger("Using: " + item);
+    	getInventory().interact("Use", item);
 		new ConditionalSleep(5000) {
 			@Override
 			public boolean condition() throws InterruptedException {
@@ -249,15 +296,28 @@ public class main extends Script {
 		}.sleep();
     }
     
-    private void useFire(RS2Object fire, final RS2Widget widget) {
+    private void cookOnFire(RS2Object fire, final String fish) {
         if (fire != null) {
+        	stateLogger("Using fire.");
         	fire.interact("Use");
+        	stateLogger("Waiting on widget to pop up.");
     		new ConditionalSleep(5000) {
     			@Override
     			public boolean condition() throws InterruptedException {
-    				return (widget != null && widget.isVisible());
+    				RS2Widget cookingMenu = widgets.get(307, 4);
+    				return (cookingMenu != null && cookingMenu.isVisible());
     			}
     		}.sleep();
+    		widgets.get(307, 4).interact("Cook All");
+			stateLogger("Cooking " + fish);
+    		new ConditionalSleep(30000) {
+    			@Override
+    			public boolean condition() throws InterruptedException {
+    				return (!getInventory().contains(fish)
+    						|| getDialogues().inDialogue()); // leveling up
+    			}
+    		}.sleep();
+
         }
     }
     
@@ -327,22 +387,16 @@ public class main extends Script {
             case COOKING:
             	stateLogger("Cooking.");
             	RS2Object fire = getObjects().closest(26185);
-                RS2Widget cookMenu = widgets.get(307, 4);
-                
-            	for (final String fish : rawFishTypes) {
-            		if (getInventory().contains(fish))
-            			// click on the raw fish in the inventory
-            			useItem(fish);
-            			// use fish on fire
-            			useFire(fire, cookMenu);
-            			cookMenu.interact("Cook All");
-                		new ConditionalSleep(5000) {
-                			@Override
-                			public boolean condition() throws InterruptedException {
-                				return (!getInventory().contains(fish));
-                			}
-                		}.sleep();
-            	}
+                if (!myPlayer().isAnimating()) { // Only attempt to take an action if I'm not already cooking.
+	            	for (final String fish : rawFishTypes) {
+	            		if (getInventory().contains(fish)) {
+	            			// click on the raw fish in the inventory
+	            			useItem(fish);
+	            			// use fish on fire
+	            			cookOnFire(fire, fish);
+	            		}
+	            	}
+                }
                 break;
             default:
                 // I wouldn't expect to ever get here. It's prudent to add a default though.

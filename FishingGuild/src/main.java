@@ -29,7 +29,7 @@ public class main extends Script {
 	private int inventoryCount = 0;
 	private int fishCaught = 0;
 	// Perfect northern fishing dock area. :)
-    private final Area fishingDocksArea = new Area(
+    private final Area fishingArea = new Area(
     		new int[][]{
     				{2600, 3426},
     				{2605, 3426},
@@ -49,7 +49,7 @@ public class main extends Script {
     		);
     private final Area northernFishingSpots = new Area(2598, 3419, 2605, 3426);
     // Perfect guild bank area. :)
-	private final Area guildBankArea = new Area(
+	private final Area bankArea = new Area(
 			new int[][]{
 					{2586, 3418},
 					{2586, 3423},
@@ -144,10 +144,10 @@ public class main extends Script {
 		
 		// DEBUG: Draw bank, bankDestination, and fishing areas.
 		if (DEBUG == true) {
-			for (Position p : guildBankArea.getPositions() ) {
+			for (Position p : bankArea.getPositions() ) {
 				drawTile(script, g, p, Color.green, Color.white, "");
 			}
-			for (Position p : fishingDocksArea.getPositions() ) {
+			for (Position p : fishingArea.getPositions() ) {
 				drawTile(script, g, p, Color.pink, Color.white, "");
 			}
 			if (bankDestination != null)
@@ -252,8 +252,8 @@ public class main extends Script {
     */
     private State getState() {
     	Boolean inventoryFull = getInventory().isFull();
-    	Boolean inBank = guildBankArea.contains(myPlayer());
-    	Boolean onDock = fishingDocksArea.contains(myPlayer());
+    	Boolean inBank = bankArea.contains(myPlayer());
+    	Boolean onDock = fishingArea.contains(myPlayer());
     	Boolean isAnimating = myPlayer().isAnimating();
     	// Inventory full, banking states
         if (inventoryFull
@@ -292,7 +292,7 @@ public class main extends Script {
             case WALK_TO_BANK:
             	stateLogger("Walking to bank");
                 sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
-                bankDestination = new Position(guildBankArea.getRandomPosition());
+                bankDestination = new Position(bankArea.getRandomPosition());
                 getWalking().webWalk(bankDestination);
                 break;
             case OPEN_BANK:
@@ -313,7 +313,7 @@ public class main extends Script {
                 break;
             case WALK_TO_FISHING_SPOT:
             	stateLogger("Walking to fishing spots.");
-    			getWalking().webWalk(new Position(fishingDocksArea.getRandomPosition()));
+    			getWalking().webWalk(new Position(fishingArea.getRandomPosition()));
                 break;
             case FIND_FISHING_SPOT:
             	stateLogger("Finding spot.");
@@ -344,7 +344,7 @@ public class main extends Script {
                 // @TODO - instead of checking for anything in inventory, we should check for the addition of
                 // fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
                 // is in the inventory now for whatever reason (script paused, random, etc).
-				if (getInventory().getEmptySlots() != inventoryCount && fishingDocksArea.contains(myPlayer())) {
+				if (getInventory().getEmptySlots() != inventoryCount && fishingArea.contains(myPlayer())) {
 					inventoryCount = getInventory().getEmptySlots();
 					fishCaught += 1;
 				}
