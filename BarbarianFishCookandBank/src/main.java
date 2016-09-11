@@ -10,7 +10,6 @@ import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Entity;
 import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.api.model.RS2Object;
-import org.osbot.rs07.api.ui.RS2Widget;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.api.ui.Tab;
 import org.osbot.rs07.script.Script;
@@ -304,13 +303,12 @@ public class main extends Script {
     		new ConditionalSleep(5000) {
     			@Override
     			public boolean condition() throws InterruptedException {
-    				RS2Widget cookingMenu = widgets.get(307, 4);
-    				return (cookingMenu != null && cookingMenu.isVisible());
+    				return (widgets.get(307, 4) != null && widgets.get(307, 4).isVisible());
     			}
     		}.sleep();
     		widgets.get(307, 4).interact("Cook All");
 			stateLogger("Cooking " + fish);
-    		new ConditionalSleep(30000) {
+    		new ConditionalSleep(0000) {
     			@Override
     			public boolean condition() throws InterruptedException {
     				return (!getInventory().contains(fish)
@@ -411,3 +409,5 @@ public class main extends Script {
 //		http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
 //			- Change gained levels to xp/hr
 //			- Add all sorts of nice information :)
+// @TODO - log out when out of feathers
+// @TODO - Improve Areas to be more precise to prevent getting webwalk stuck
