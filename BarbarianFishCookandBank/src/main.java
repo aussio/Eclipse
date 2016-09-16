@@ -309,7 +309,7 @@ public class main extends Script {
     		widgets.get(307, 4).interact("Cook All");
 			stateLogger("Cooking " + fish);
 			sleep(1000); // Allow a second to get out of the cooking dialogue
-    		new ConditionalSleep(30000) {
+    		new ConditionalSleep(60000) {
     			@Override
     			public boolean condition() throws InterruptedException {
     				return (!getInventory().contains(fish)
@@ -410,5 +410,6 @@ public class main extends Script {
 //		http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
 //			- Change gained levels to xp/hr
 //			- Add all sorts of nice information :)
+// @TODO - Add cooking XP and number successfully cooked.
 // @TODO - log out when out of feathers
 // @TODO - Improve Areas to be more precise to prevent getting webwalk stuck
