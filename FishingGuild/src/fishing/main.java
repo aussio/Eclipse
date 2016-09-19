@@ -1,19 +1,21 @@
+package fishing;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
+import java.util.ArrayList;
 
-import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Entity;
-import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.api.ui.Tab;
 import org.osbot.rs07.script.Script;
 import org.osbot.rs07.script.ScriptManifest;
 import org.osbot.rs07.utility.ConditionalSleep;
+
+import botlib.AbstractTask;
 
 
 @ScriptManifest(author = "Jython",
@@ -77,6 +79,8 @@ public class main extends Script {
     FISHING,
     WAITING
 	}
+  
+  	ArrayList<AbstractTask> tasks = new ArrayList<AbstractTask>();
 
     /**
     * Runs once when the script is started.
@@ -89,6 +93,9 @@ public class main extends Script {
 		timeStart = System.currentTimeMillis();
 		lastCheckedAntiban = System.currentTimeMillis();
         fishCaught = 0;
+        
+        // Task stuff
+        tasks.add(new FindFishingSpotTask(this));
 	}
 
 	public void drawTile(Script script, Graphics g, Entity entity, Color tileColor, Color textColor, String s) {
@@ -317,26 +324,7 @@ public class main extends Script {
                 break;
             case FIND_FISHING_SPOT:
             	stateLogger("Finding spot.");
-    			@SuppressWarnings("unchecked")
-				NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
-                    @Override
-                    public boolean match(NPC n) {
-                        return (n.hasAction("Net")
-                        		&& n.hasAction("Harpoon")
-                        		&& northernFishingSpots.contains(n.getPosition())); // And we're on the northern dock
-                    }
-                });
-    			if (fishingSpot != null) {
-                    sleep(random(1000,3000)); // Be a little more human about your reaction time.
-    				fishingSpot.interact("Harpoon");
-    				inventoryCount = getInventory().getEmptySlots();
-    				new ConditionalSleep(5000) {
-    					@Override
-    					public boolean condition() throws InterruptedException {
-    						return myPlayer().isAnimating();
-    					}
-        			}.sleep();
-    			}
+            	tasks.get(0).executeIfReady();
                 break;
             case FISHING:
             	stateLogger("Catching fish.");
