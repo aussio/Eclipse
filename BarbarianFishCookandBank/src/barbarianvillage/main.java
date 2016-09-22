@@ -1,3 +1,4 @@
+package barbarianvillage;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -9,6 +10,7 @@ import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Entity;
 import org.osbot.rs07.api.model.NPC;
+import org.osbot.rs07.api.model.RS2Object;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.api.ui.Tab;
 import org.osbot.rs07.script.Script;
@@ -17,8 +19,8 @@ import org.osbot.rs07.utility.ConditionalSleep;
 
 
 @ScriptManifest(author = "Jython",
-                info = "Simple Fishing Guild fisher.",
-                name = "Fishing Guild Sharks",
+                info = "Fishes Trout/Salmon at Barbarian Village, cooks them, then banks the fish.",
+                name = "Barb. Village Fish n' Cook",
                 version = 1.0,
                 logo = "")
 public class main extends Script {
@@ -28,45 +30,14 @@ public class main extends Script {
 	private String state = "Initializing..";
 	private int inventoryCount = 0;
 	private int fishCaught = 0;
-	// Perfect northern fishing dock area. :)
-    private final Area fishingArea = new Area(
-    		new int[][]{
-    				{2600, 3426},
-    				{2605, 3426},
-    				{2605, 3424},
-    				{2601, 3424},
-    				{2601, 3422},
-    				{2605, 3422},
-    				{2605, 3420},
-    				{2602, 3420},
-    				{2602, 3421},
-    				{2601, 3421},
-    				{2601, 3420},
-    				{2599, 3420},
-    				{2599, 3424},
-    				{2600, 3424}
-    			}
-    		);
-    private final Area northernFishingSpots = new Area(2598, 3419, 2605, 3426);
-    // Perfect guild bank area. :)
-	private final Area bankArea = new Area(
-			new int[][]{
-					{2586, 3418},
-					{2586, 3423},
-					{2588, 3423},
-					{2588, 3422},
-					{2590, 3422},
-					{2590, 3421},
-					{2589, 3421},
-					{2589, 3420},
-					{2592, 3420},
-					{2592, 3417},
-					{2588, 3417},
-					{2588, 3418}
-				}
-			);
-	// Only useful to instantiate here for debug paint.
-	private Position bankDestination;
+
+	private final Area northFishingArea = new Area(3106, 3436, 3110, 3430);
+	private final Area southFishingArea = new Area(3104, 3422, 3101, 3426);
+    private final Area[] fishingAreas = { northFishingArea,
+    									  southFishingArea};
+	private final Area bankArea = new Area(3094, 3488, 3092, 3492);
+	private final String[] rawFishTypes = {"Raw trout", "Raw salmon"};
+	private final String[] cookedFishTypes = {"Trout", "Salmon"};
 
   private enum State {
 	WALK_TO_BANK,
@@ -75,6 +46,7 @@ public class main extends Script {
     WALK_TO_FISHING_SPOT,
     FIND_FISHING_SPOT,
     FISHING,
+    COOKING,
     WAITING
 	}
 
@@ -91,6 +63,16 @@ public class main extends Script {
         fishCaught = 0;
 	}
 
+	/**
+	 * 
+	 * @param script	Most likely: client.getBot().getScriptExecutor().getCurrent()
+	 * @param g			The Graphics2D object passed into the onPaint() method
+	 * @param entity	The Entity whose tile you wish to draw on.
+	 * @param tileColor	The color that will be drawn around the border of the tile
+	 * @param textColor	The color of the text for the "s" parameter
+	 * @param s			The text you wish to display next to the tile.
+	 * 					Particularly useful if it's a property of the Entity passed in.
+	 */
 	public void drawTile(Script script, Graphics g, Entity entity, Color tileColor, Color textColor, String s) {
 		Polygon polygon;
 		    if (entity != null && entity.exists() && (polygon = entity.getPosition().getPolygon(script.getBot(), entity.getPosition().getTileHeight(script.getBot()))) != null) {
@@ -105,7 +87,15 @@ public class main extends Script {
 		        g.drawString(s, (int) polygon.getBounds().getX(), (int) polygon.getBounds().getY());
 		    }
 		}
-	
+	/**
+	 * 
+	 * @param script	Most likely: client.getBot().getScriptExecutor().getCurrent()
+	 * @param g			The Graphics2D object passed into the onPaint() method
+	 * @param position	The Position for the tile you are wishing to draw on
+	 * @param tileColor	The color that will be drawn around the border of the tile
+	 * @param textColor	The color of the text for the "s" parameter
+	 * @param s			The text you wish to display next to the tile, if any.
+	 */
 	public void drawTile(Script script, Graphics g, Position position, Color tileColor, Color textColor, String s) {
 		Polygon polygon;
 		    if (position != null && (polygon = position.getPolygon(script.getBot(), position.getTileHeight(script.getBot()))) != null) {
@@ -136,10 +126,10 @@ public class main extends Script {
 		g.drawString("XP Gained: " + getExperienceTracker().getGainedXP(Skill.FISHING) + " (" + getExperienceTracker().getGainedLevels(Skill.FISHING) + ")", 8, 80);
 		g.drawString("Fish caught: " + fishCaught, 8, 95);
 		
-		// Highlight the fishing spot being used. Just kinda neat. :)
 		Script script = client.getBot().getScriptExecutor().getCurrent();
+		// Highlight the fishing spot being used. Just kinda neat. :)
 		if (myPlayer().getInteracting() != null) {
-			drawTile(script, g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
+			drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
 		}
 		
 		// DEBUG: Draw bank, bankDestination, and fishing areas.
@@ -147,11 +137,11 @@ public class main extends Script {
 			for (Position p : bankArea.getPositions() ) {
 				drawTile(script, g, p, Color.green, Color.white, "");
 			}
-			for (Position p : fishingArea.getPositions() ) {
-				drawTile(script, g, p, Color.pink, Color.white, "");
+			for (Area fishingArea : fishingAreas) {
+				for (Position p : fishingArea.getPositions() ) {
+					drawTile(script, g, p, Color.pink, Color.white, "");
+				}
 			}
-			if (bankDestination != null)
-				drawTile(script, g, bankDestination, Color.red, Color.white, "");
 		}
 	}
 
@@ -243,7 +233,16 @@ public class main extends Script {
 			log("State updated to: " + state);
 		}
 	}
-    /**
+	
+	private Boolean inFishingAreas() {
+		for (Area a : fishingAreas) {
+			if (a.contains(myPlayer()))
+				return true;
+		}
+		return false;
+	}
+	
+	/**
     * Gets the current state of the player.
     * This method is intended to be run on every iteration of the onLoop() method to determine
     * what actions needs to be performed.
@@ -253,9 +252,13 @@ public class main extends Script {
     private State getState() {
     	Boolean inventoryFull = getInventory().isFull();
     	Boolean inBank = bankArea.contains(myPlayer());
-    	Boolean onDock = fishingArea.contains(myPlayer());
+    	Boolean inFishingArea = inFishingAreas();
     	Boolean isAnimating = myPlayer().isAnimating();
-    	// Inventory full, banking states
+    	Boolean hasRawFish = (getInventory().contains(rawFishTypes));
+    	// Inventory full, banking and cooking states
+    	if (inventoryFull
+    			&& hasRawFish)
+    		return State.COOKING;
         if (inventoryFull
                 && !inBank
                 && !getBank().isOpen())
@@ -269,20 +272,55 @@ public class main extends Script {
             return State.USE_AND_CLOSE_BANK;
         // Inventory NOT full, fishing states
         if (!inventoryFull
-                && !onDock
+                && !inFishingArea
                 && !getBank().isOpen())
             return State.WALK_TO_FISHING_SPOT;
         if (!inventoryFull
-                && onDock
+                && inFishingArea
                 && !isAnimating)
             return State.FIND_FISHING_SPOT;
         if (!inventoryFull
-                && onDock
+                && inFishingArea
                 && isAnimating)
             return State.FISHING;
 		return State.WAITING;
     }
 
+    private void useItem(String item) {
+    	stateLogger("Using: " + item);
+    	getInventory().interact("Use", item);
+		new ConditionalSleep(5000) {
+			@Override
+			public boolean condition() throws InterruptedException {
+				return getInventory().isItemSelected();			    			}
+		}.sleep();
+    }
+    
+    private void cookOnFire(RS2Object fire, final String fish) throws InterruptedException {
+        if (fire != null) {
+        	stateLogger("Using fire.");
+        	fire.interact("Use");
+        	stateLogger("Waiting on widget to pop up.");
+    		new ConditionalSleep(5000) {
+    			@Override
+    			public boolean condition() throws InterruptedException {
+    				return (widgets.get(307, 4) != null && widgets.get(307, 4).isVisible());
+    			}
+    		}.sleep();
+    		widgets.get(307, 4).interact("Cook All");
+			stateLogger("Cooking " + fish);
+			sleep(1000); // Allow a second to get out of the cooking dialogue
+    		new ConditionalSleep(60000) {
+    			@Override
+    			public boolean condition() throws InterruptedException {
+    				return (!getInventory().contains(fish)
+    						|| getDialogues().inDialogue()); // leveling up
+    			}
+    		}.sleep();
+
+        }
+    }
+    
     /**
     * A loop that continually runs, checking the State of the player and taking action accordingly.
     */
@@ -292,20 +330,19 @@ public class main extends Script {
             case WALK_TO_BANK:
             	stateLogger("Walking to bank");
                 sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
-                bankDestination = new Position(bankArea.getRandomPosition());
-                getWalking().webWalk(bankDestination);
+                getWalking().webWalk(new Position(bankArea.getRandomPosition()));
                 break;
             case OPEN_BANK:
-            	bankDestination = null;
             	openBank();
                 break;
             case USE_AND_CLOSE_BANK:
             	stateLogger("Depositing items");
-    			getBank().depositAllExcept("Harpoon");
+    			getBank().depositAllExcept("Fly fishing rod", "Feather");
     			new ConditionalSleep(5000) {
     				@Override
     				public boolean condition() throws InterruptedException {
-    					return (!getInventory().contains("Shark"));
+    					return (!getInventory().contains("Burnt fish")
+    							&& !getInventory().contains(cookedFishTypes));
     				}
     			}.sleep();
     			stateLogger("Closing bank");
@@ -313,7 +350,7 @@ public class main extends Script {
                 break;
             case WALK_TO_FISHING_SPOT:
             	stateLogger("Walking to fishing spots.");
-    			getWalking().webWalk(new Position(fishingArea.getRandomPosition()));
+    			getWalking().webWalk(new Position(northFishingArea.getRandomPosition()));
                 break;
             case FIND_FISHING_SPOT:
             	stateLogger("Finding spot.");
@@ -321,14 +358,12 @@ public class main extends Script {
 				NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
                     @Override
                     public boolean match(NPC n) {
-                        return (n.hasAction("Net")
-                        		&& n.hasAction("Harpoon")
-                        		&& northernFishingSpots.contains(n.getPosition())); // And we're on the northern dock
+                        return (n.hasAction("Lure"));
                     }
                 });
     			if (fishingSpot != null) {
                     sleep(random(1000,3000)); // Be a little more human about your reaction time.
-    				fishingSpot.interact("Harpoon");
+    				fishingSpot.interact("Lure");
     				inventoryCount = getInventory().getEmptySlots();
     				new ConditionalSleep(5000) {
     					@Override
@@ -344,10 +379,24 @@ public class main extends Script {
                 // @TODO - instead of checking for anything in inventory, we should check for the addition of
                 // fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
                 // is in the inventory now for whatever reason (script paused, random, etc).
-				if (getInventory().getEmptySlots() != inventoryCount && fishingArea.contains(myPlayer())) {
+				if (getInventory().getEmptySlots() != inventoryCount && inFishingAreas()) {
 					inventoryCount = getInventory().getEmptySlots();
 					fishCaught += 1;
 				}
+                break;
+            case COOKING:
+            	stateLogger("Cooking.");
+            	RS2Object fire = getObjects().closest(26185);
+                if (!myPlayer().isAnimating()) { // Only attempt to take an action if I'm not already cooking.
+	            	for (final String fish : rawFishTypes) {
+	            		if (getInventory().contains(fish)) {
+	            			// click on the raw fish in the inventory
+	            			useItem(fish);
+	            			// use fish on fire
+	            			cookOnFire(fire, fish);
+	            		}
+	            	}
+                }
                 break;
             default:
                 // I wouldn't expect to ever get here. It's prudent to add a default though.
@@ -362,11 +411,6 @@ public class main extends Script {
 //		http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
 //			- Change gained levels to xp/hr
 //			- Add all sorts of nice information :)
-// @TODO - add fishing options (and debug option?)
-// 		http://osbot.org/forum/topic/87731-explvs-dank-gui-tutorial/
-//			- lobsters
-//			- swordfish/tuna
-//			- sharks
-// @TODO - If you take long enough to find a spot, check the other dock.
-// @TODO - If you don't have the fishing item (pot, harpoon) then withdraw one from the bank.
-//				 If there's not one in the bank, log out and log that.
+// @TODO - Add cooking XP and number successfully cooked.
+// @TODO - log out when out of feathers
+// @TODO - Improve Areas to be more precise to prevent getting webwalk stuck
