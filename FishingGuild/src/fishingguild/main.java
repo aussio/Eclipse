@@ -294,7 +294,7 @@ public class main extends Script {
             	stateLogger("Walking to bank");
                 sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
                 bankDestination = new Position(bankArea.getRandomPosition());
-                getWalking().webWalk(bankDestination);
+                getWalking().walk(bankDestination);
                 break;
             case OPEN_BANK:
             	bankDestination = null;
@@ -314,7 +314,7 @@ public class main extends Script {
                 break;
             case WALK_TO_FISHING_SPOT:
             	stateLogger("Walking to fishing spots.");
-    			getWalking().webWalk(new Position(fishingArea.getRandomPosition()));
+    			getWalking().walk(new Position(fishingArea.getRandomPosition()));
                 break;
             case FIND_FISHING_SPOT:
             	stateLogger("Finding spot.");
