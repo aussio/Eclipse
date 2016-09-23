@@ -1,4 +1,6 @@
 package tasks;
+import java.util.Optional;
+
 import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.model.NPC;
@@ -31,8 +33,8 @@ public class FindFishingSpotTask extends AbstractTask {
 			);
 	private final Area northernFishingSpots = new Area(2598, 3419, 2605, 3426);
 
-	public FindFishingSpotTask(MethodProvider api) {
-		super(api);
+	public FindFishingSpotTask(MethodProvider api, Optional<Boolean> debug) {
+		super(api, debug);
 	}
 
 	/**
@@ -56,6 +58,7 @@ public class FindFishingSpotTask extends AbstractTask {
 	 * Find the closest fishing spot and interact with it.
 	 */
 	public void execute() throws InterruptedException {
+		this.logger.log("Finding fishing spot");
 		NPC fishingSpot = findFishingSpot(new String[]{"Net", "Harpoon"});
 		if (fishingSpot != null) {
 			MethodProvider.sleep(MethodProvider.random(1000,3000)); // Be a little more human about your reaction time.

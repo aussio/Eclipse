@@ -1,24 +1,30 @@
 package botlib;
 
+import java.util.Optional;
+
 import org.osbot.rs07.script.MethodProvider;
 
 /**
  * Provides the interface for Task classes.
  * A "Task" is intended to have a method by which the caller can check if the Task needs to be called
- *   and an associated method to perform the work of the task when the Task does need to be called. 
+ *   and an associated method to perform the work of the task when the Task does need to be called.
  */
 public abstract class AbstractTask {
 
 	protected MethodProvider api;
+	protected StateLogger logger;
+	protected String stateString;
 
 	/**
 	 * Take in the script context so that the osbot methods run on the script using the Tasks.
 	 * When instantiating a concrete Task class within a Script, you will pass the script object itself into the constructor.
 	 * Example: `new DropTask(this)`
 	 * @param api
+	 * @param debug An optional parameter determining if we're running in debug mode.
 	 */
-	public AbstractTask(MethodProvider api) {
+	public AbstractTask(MethodProvider api, Optional<Boolean> debug) {
 		this.api = api;
+		this.logger = StateLogger.getInstance(debug);
 	}
 
 	/**
@@ -36,9 +42,10 @@ public abstract class AbstractTask {
 	 * The command-pattern interface that the caller executes to perform the Task's work when needed.
 	 */
 	public void executeIfReady() throws InterruptedException {
-		if (shouldExecute()) { 
+		if (shouldExecute()) {
+			logger.log(stateString);
 			execute();
 		}
 	}
 
-} 
+}

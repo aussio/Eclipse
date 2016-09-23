@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
@@ -17,6 +18,7 @@ import org.osbot.rs07.utility.ConditionalSleep;
 
 import tasks.FindFishingSpotTask;
 import botlib.AbstractTask;
+import botlib.StateLogger;
 
 
 @ScriptManifest(author = "Jython",
@@ -25,10 +27,10 @@ name = "Fishing Guild Sharks",
 version = 1.0,
 logo = "")
 public class main extends Script {
-	private final Boolean DEBUG = false;
+	public final Optional<Boolean> DEBUG = null;
 	private long timeStart;
 	private long lastCheckedAntiban;
-	private String state = "Initializing..";
+	private StateLogger logger;
 	private int inventoryCount = 0;
 	private int fishCaught = 0;
 	// Perfect northern fishing dock area. :)
@@ -94,9 +96,10 @@ public class main extends Script {
 		timeStart = System.currentTimeMillis();
 		lastCheckedAntiban = System.currentTimeMillis();
 		fishCaught = 0;
+		this.logger = StateLogger.getInstance(DEBUG);
 
 		// Task stuff
-		tasks.add(new FindFishingSpotTask(this));
+		tasks.add(new FindFishingSpotTask(this, this.DEBUG));
 	}
 
 	public void drawTile(Script script, Graphics g, Entity entity, Color tileColor, Color textColor, String s) {
@@ -139,7 +142,7 @@ public class main extends Script {
 		g.setColor(Color.white);
 
 		g.drawString("x", (int)getMouse().getPosition().getX() - 4, (int)getMouse().getPosition().getY() + 5);
-		g.drawString(state, 8, 50);
+		g.drawString(logger.state, 8, 50);
 		g.drawString("Time Running: " + (hours >= 10 ? "" + hours : "0" + hours) + ":" + (minutes >= 10 ? "" + minutes : "0" + minutes) + ":" + (seconds >= 10 ? "" + seconds : "0" + seconds), 8, 65);
 		g.drawString("XP Gained: " + getExperienceTracker().getGainedXP(Skill.FISHING) + " (" + getExperienceTracker().getGainedLevels(Skill.FISHING) + ")", 8, 80);
 		g.drawString("Fish caught: " + fishCaught, 8, 95);
@@ -151,7 +154,7 @@ public class main extends Script {
 		}
 
 		// DEBUG: Draw bank, bankDestination, and fishing areas.
-		if (DEBUG == true) {
+		if (DEBUG.isPresent()) {
 			for (Position p : bankArea.getPositions() ) {
 				drawTile(script, g, p, Color.green, Color.white, "");
 			}
@@ -196,7 +199,7 @@ public class main extends Script {
 		long now = System.currentTimeMillis();
 		long timeSinceLastAntiban = now - lastCheckedAntiban;
 		if (timeSinceLastAntiban > random(240000, 290000)) {
-			stateLogger("Antiban");
+			logger.log("Antiban");
 			lastCheckedAntiban = now;
 			int i = random(2);
 			switch (i) {
@@ -239,19 +242,9 @@ public class main extends Script {
 				return getBank().isOpen();
 			}
 		}.sleep();
-		log("Opening Bank");
+		logger.log("Opening Bank");
 	}
 
-	/**
-	 * If the state has changed, log it and update the state attribute for the paint.
-	 * @param newState - A string representing the current state of the player.
-	 */
-	private void stateLogger(String newState) {
-		if (state != newState) {
-			state = newState;
-			log("State updated to: " + state);
-		}
-	}
 	/**
 	 * Gets the current state of the player.
 	 * This method is intended to be run on every iteration of the onLoop() method to determine
@@ -303,7 +296,7 @@ public class main extends Script {
 	public int onLoop() throws InterruptedException {
 		switch (getState()) {
 		case WALK_TO_BANK:
-			stateLogger("Walking to bank");
+			logger.log("Walking to bank");
 			sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
 			bankDestination = new Position(bankArea.getRandomPosition());
 			getWalking().walk(bankDestination);
@@ -313,7 +306,7 @@ public class main extends Script {
 			openBank();
 			break;
 		case USE_AND_CLOSE_BANK:
-			stateLogger("Depositing items");
+			logger.log("Depositing items");
 			getBank().depositAllExcept("Harpoon");
 			new ConditionalSleep(5000) {
 				@Override
@@ -321,19 +314,18 @@ public class main extends Script {
 					return (!getInventory().contains("Shark"));
 				}
 			}.sleep();
-			stateLogger("Closing bank");
+			logger.log("Closing bank");
 			getBank().close();
 			break;
 		case WALK_TO_FISHING_SPOT:
-			stateLogger("Walking to fishing spots.");
+			logger.log("Walking to fishing spots.");
 			getWalking().walk(new Position(fishingArea.getRandomPosition()));
 			break;
 		case FIND_FISHING_SPOT:
-			stateLogger("Finding spot.");
 			tasks.get(0).executeIfReady();
 			break;
 		case FISHING:
-			stateLogger("Catching fish.");
+			logger.log("Catching fish.");
 			randomizeMouse(); // antiban
 			// @TODO - instead of checking for anything in inventory, we should check for the addition of
 			// fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
@@ -345,7 +337,7 @@ public class main extends Script {
 			break;
 		default:
 			// I wouldn't expect to ever get here. It's prudent to add a default though.
-			stateLogger("Unexpected condition. Waiting.");
+			logger.log("Unexpected condition. Waiting.");
 			sleep(1000);
 		}
 		return random(200,300);
