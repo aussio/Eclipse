@@ -2,6 +2,8 @@ package botlib;
 
 import java.util.Optional;
 
+import org.osbot.rs07.script.MethodProvider;
+
 /**
  * A singleton for keeping track of what state we are in and logging if necessary.
  * @author austincurtis
@@ -10,13 +12,15 @@ import java.util.Optional;
 public class StateLogger {
 
 	private static StateLogger instance = null;
-	public String state;
+	public String state = "Initializing";
 	private boolean debug;
+	private MethodProvider api;
 
 	/**
 	 * @param debug Determines if we log the state when it changes.
 	 */
-	protected StateLogger(Optional<Boolean> debug) {
+	protected StateLogger(MethodProvider api, Optional<Boolean> debug) {
+		this.api = api;
 		this.state = "Initializing";
 		if (debug.isPresent()) {
 			this.debug = true;
@@ -28,9 +32,9 @@ public class StateLogger {
 	 * @param debug Determines if we log the state when it changes.
 	 * @return Returns the singleton instance of the class.
 	 */
-	public static StateLogger getInstance(Optional<Boolean> debug) {
+	public static StateLogger getInstance(MethodProvider api, Optional<Boolean> debug) {
 		if (instance == null) {
-			instance = new StateLogger(debug);
+			instance = new StateLogger(api, debug);
 		}
 		return instance;
 	}
@@ -40,11 +44,11 @@ public class StateLogger {
 	 * If we are using debug, then log the changed state.
 	 * @param state - A string representing the current state of the player.
 	 */
-	public void log(String state) {
-		if (this.state != state) {
-			this.state = state;
+	public void update(String newState) {
+		if (this.state != newState) {
+			this.state = newState;
 			if (this.debug) {
-				log("STATE: " + state);
+				api.log("STATE: " + this.state);
 			}
 		}
 	}

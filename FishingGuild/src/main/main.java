@@ -27,7 +27,7 @@ name = "Fishing Guild",
 version = 1.0,
 logo = "")
 public class main extends Script {
-	public final Optional<Boolean> DEBUG = null;
+	public final Optional<Boolean> DEBUG = Optional.of(true);
 	private long timeStart;
 	private long lastCheckedAntiban;
 	private StateLogger logger;
@@ -96,7 +96,7 @@ public class main extends Script {
 		timeStart = System.currentTimeMillis();
 		lastCheckedAntiban = System.currentTimeMillis();
 		fishCaught = 0;
-		this.logger = StateLogger.getInstance(DEBUG);
+		this.logger = StateLogger.getInstance(this, DEBUG);
 
 		// Task stuff
 		tasks.add(new FindFishingSpotTask(this, this.DEBUG));
@@ -199,7 +199,7 @@ public class main extends Script {
 		long now = System.currentTimeMillis();
 		long timeSinceLastAntiban = now - lastCheckedAntiban;
 		if (timeSinceLastAntiban > random(240000, 290000)) {
-			logger.log("Antiban");
+			logger.update("Antiban");
 			lastCheckedAntiban = now;
 			int i = random(2);
 			switch (i) {
@@ -242,7 +242,7 @@ public class main extends Script {
 				return getBank().isOpen();
 			}
 		}.sleep();
-		logger.log("Opening Bank");
+		logger.update("Opening Bank");
 	}
 
 	/**
@@ -296,7 +296,7 @@ public class main extends Script {
 	public int onLoop() throws InterruptedException {
 		switch (getState()) {
 		case WALK_TO_BANK:
-			logger.log("Walking to bank");
+			logger.update("Walking to bank");
 			sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
 			bankDestination = new Position(bankArea.getRandomPosition());
 			getWalking().walk(bankDestination);
@@ -306,7 +306,7 @@ public class main extends Script {
 			openBank();
 			break;
 		case USE_AND_CLOSE_BANK:
-			logger.log("Depositing items");
+			logger.update("Depositing items");
 			getBank().depositAllExcept("Harpoon");
 			new ConditionalSleep(5000) {
 				@Override
@@ -314,18 +314,18 @@ public class main extends Script {
 					return (!getInventory().contains("Shark"));
 				}
 			}.sleep();
-			logger.log("Closing bank");
+			logger.update("Closing bank");
 			getBank().close();
 			break;
 		case WALK_TO_FISHING_SPOT:
-			logger.log("Walking to fishing spots.");
+			logger.update("Walking to fishing spots.");
 			getWalking().walk(new Position(fishingArea.getRandomPosition()));
 			break;
 		case FIND_FISHING_SPOT:
 			tasks.get(0).executeIfReady();
 			break;
 		case FISHING:
-			logger.log("Catching fish.");
+			logger.update("Catching fish.");
 			randomizeMouse(); // antiban
 			// @TODO - instead of checking for anything in inventory, we should check for the addition of
 			// fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
@@ -337,7 +337,12 @@ public class main extends Script {
 			break;
 		default:
 			// I wouldn't expect to ever get here. It's prudent to add a default though.
-			logger.log("Unexpected condition. Waiting.");
+			String message = String.join(" ",
+					"Unexpected condition. Waiting.",
+					"If this never stops, please report on the forums",
+					"what exactly you were doing when you started the script.",
+					"Thanks!");
+			logger.update(message);
 			sleep(1000);
 		}
 		return random(200,300);

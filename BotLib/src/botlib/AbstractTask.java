@@ -13,7 +13,7 @@ public abstract class AbstractTask {
 
 	protected MethodProvider api;
 	protected StateLogger logger;
-	protected String stateString;
+	protected String state;
 
 	/**
 	 * Take in the script context so that the osbot methods run on the script using the Tasks.
@@ -22,9 +22,10 @@ public abstract class AbstractTask {
 	 * @param api
 	 * @param debug An optional parameter determining if we're running in debug mode.
 	 */
-	public AbstractTask(MethodProvider api, Optional<Boolean> debug) {
+	public AbstractTask(MethodProvider api, String state, Optional<Boolean> debug) {
 		this.api = api;
-		this.logger = StateLogger.getInstance(debug);
+		this.state = state;
+		this.logger = StateLogger.getInstance(api, debug);
 	}
 
 	/**
@@ -43,7 +44,7 @@ public abstract class AbstractTask {
 	 */
 	public void executeIfReady() throws InterruptedException {
 		if (shouldExecute()) {
-			logger.log(stateString);
+			logger.update(state);
 			execute();
 		}
 	}

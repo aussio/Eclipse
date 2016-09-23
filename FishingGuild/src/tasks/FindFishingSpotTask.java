@@ -34,7 +34,14 @@ public class FindFishingSpotTask extends AbstractTask {
 	private final Area northernFishingSpots = new Area(2598, 3419, 2605, 3426);
 
 	public FindFishingSpotTask(MethodProvider api, Optional<Boolean> debug) {
-		super(api, debug);
+		super(api, "Finding fishing spot", debug);
+	}
+
+	/**
+	 * Alternate constructor allowing for the default state String to be overridden.
+	 */
+	public FindFishingSpotTask(MethodProvider api, String state, Optional<Boolean> debug) {
+		super(api, state, debug);
 	}
 
 	/**
@@ -58,7 +65,6 @@ public class FindFishingSpotTask extends AbstractTask {
 	 * Find the closest fishing spot and interact with it.
 	 */
 	public void execute() throws InterruptedException {
-		this.logger.log("Finding fishing spot");
 		NPC fishingSpot = findFishingSpot(new String[]{"Net", "Harpoon"});
 		if (fishingSpot != null) {
 			MethodProvider.sleep(MethodProvider.random(1000,3000)); // Be a little more human about your reaction time.
