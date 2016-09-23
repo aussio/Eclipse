@@ -1,4 +1,4 @@
-package fishing;
+package main;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -15,6 +15,7 @@ import org.osbot.rs07.script.Script;
 import org.osbot.rs07.script.ScriptManifest;
 import org.osbot.rs07.utility.ConditionalSleep;
 
+import tasks.FindFishingSpotTask;
 import botlib.AbstractTask;
 
 
