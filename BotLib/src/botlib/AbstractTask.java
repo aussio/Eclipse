@@ -25,12 +25,12 @@ public abstract class AbstractTask {
 	 * A status-check representing whether the work within this.execute() needs to be called.
 	 * @return
 	 */
-	protected abstract boolean shouldExecute();
+	public abstract boolean shouldExecute();
 
 	/**
 	 * The "work" that needs to be performed when the script is in a state such that this.shouldExecute() is true.
 	 */
-	protected abstract void execute() throws InterruptedException;
+	public abstract void execute() throws InterruptedException;
 
 	/**
 	 * The command-pattern interface that the caller executes to perform the Task's work when needed.

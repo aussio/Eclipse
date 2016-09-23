@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Applications/osbot 2.4.89.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/BotLib"/>
+	<classpathentry kind="lib" path="/Users/austincurtis/Eclipse/BotLib/src/botlib"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
