@@ -16,7 +16,7 @@ import org.osbot.rs07.script.Script;
 import org.osbot.rs07.script.ScriptManifest;
 import org.osbot.rs07.utility.ConditionalSleep;
 
-import tasks.FindFishingSpotTask;
+import tasks.FindFishingSpot;
 import botlib.AbstractTask;
 import botlib.StateLogger;
 
@@ -99,7 +99,7 @@ public class main extends Script {
 		this.logger = StateLogger.getInstance(this, DEBUG);
 
 		// Task stuff
-		tasks.add(new FindFishingSpotTask(this, this.DEBUG));
+		tasks.add(new FindFishingSpot(this, this.DEBUG));
 	}
 
 	public void drawTile(Script script, Graphics g, Entity entity, Color tileColor, Color textColor, String s) {

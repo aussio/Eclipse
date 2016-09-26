@@ -11,7 +11,7 @@ import botlib.BotLibMethodProvider;
 import botlib.FConditionalSleep;
 
 
-public class FindFishingSpotTask extends AbstractTask {
+public class FindFishingSpot extends AbstractTask {
 
 	private final Area fishingArea = new Area(
 			new int[][]{
@@ -33,14 +33,14 @@ public class FindFishingSpotTask extends AbstractTask {
 			);
 	private final Area northernFishingSpots = new Area(2598, 3419, 2605, 3426);
 
-	public FindFishingSpotTask(MethodProvider api, Optional<Boolean> debug) {
+	public FindFishingSpot(MethodProvider api, Optional<Boolean> debug) {
 		super(api, "Finding fishing spot", debug);
 	}
 
 	/**
 	 * Alternate constructor allowing for the default state String to be overridden.
 	 */
-	public FindFishingSpotTask(MethodProvider api, String state, Optional<Boolean> debug) {
+	public FindFishingSpot(MethodProvider api, String state, Optional<Boolean> debug) {
 		super(api, state, debug);
 	}
 
