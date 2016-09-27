@@ -19,12 +19,14 @@ public class Paint {
 	private long previousItemCount;
 	private long itemsCollected;
 	private String[] itemsToTrack;
+	private Skill skill;
 
 	public Paint(Script script, StateLogger logger) {
 		this.script = script;
 		this.logger = logger;
 		this.timeStart = System.currentTimeMillis();
 		this.itemsToTrack = new String[]{"Raw Shark"};
+		this.skill = Skill.FISHING;
 		this.itemsCollected = 0;
 		this.previousItemCount = script.getInventory().getAmount(itemsToTrack);
 	}
@@ -86,8 +88,8 @@ public class Paint {
 	 * @return The formatted string.
 	 */
 	private final String formatValue(final int v){
-		return (v > 1_000_000) ? String.format("%.2fm", (double) (v / 1_000_000)) :
-			(v > 1000) ? String.format("%.1fk", (double) (v / 1000)) :
+		return (v > 1_000_000) ? String.format("%.2fm", ( (double) v / 1_000_000)) :
+			(v > 1000) ? String.format("%.1fk", ( (double) v / 1000)) :
 				v + "";
 	}
 
@@ -129,7 +131,7 @@ public class Paint {
 		// Draw the XP gains paint
 		g.drawString(logger.state, 8, 50);
 		g.drawString("Time Running: " +  formatTime(timeElapsed), 8, 65);
-		g.drawString("XP Gained: " + formatValue(script.getExperienceTracker().getGainedXP(Skill.FISHING)) + " (" + script.getExperienceTracker().getGainedXPPerHour(Skill.FISHING) + "/hr)", 8, 80);
+		g.drawString("XP Gained: " + formatValue(script.getExperienceTracker().getGainedXP(this.skill)) + " (" + formatValue(script.getExperienceTracker().getGainedXPPerHour(this.skill)) + "/hr)", 8, 80);
 		g.drawString("Fish caught: " + getItemsGathered(itemsToTrack), 8, 95);
 
 
