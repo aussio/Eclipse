@@ -5,6 +5,10 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Entity;
@@ -20,12 +24,16 @@ public class Paint {
 	private long itemsCollected;
 	private String[] itemsToTrack;
 	private Skill skill;
+	private int itemsID;
+	private int itemPrice;
 
 	public Paint(Script script, StateLogger logger) {
 		this.script = script;
 		this.logger = logger;
 		this.timeStart = System.currentTimeMillis();
 		this.itemsToTrack = new String[]{"Raw Shark"};
+		this.itemsID = 383;
+		this.itemPrice = getPrice(itemsID);
 		this.skill = Skill.FISHING;
 		this.itemsCollected = 0;
 		this.previousItemCount = script.getInventory().getAmount(itemsToTrack);
@@ -68,6 +76,24 @@ public class Paint {
 		g.drawString("x", (int)script.getMouse().getPosition().getX() - 4, (int)script.getMouse().getPosition().getY() + 5);
 	}
 
+	private int getPrice(int id){
+		int price = 0;
+
+		try {
+			URL url = new URL("http://api.rsbuddy.com/grandExchange?a=guidePrice&i=" + id);
+			URLConnection con = url.openConnection();
+			con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36");
+			con.setUseCaches(true);
+			BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String[] data = br.readLine().replace("{", "").replace("}", "").split(",");
+			br.close();
+			price = Integer.parseInt(data[0].split(":")[1]);
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		return price;
+	}
+
 	/**
 	 * Return only the relevant time string, ignoring hours/days if the "ms" passed-in is less than those increments.
 	 * @param ms Number of milliseconds that you wish to format into human-readable time.
@@ -87,7 +113,7 @@ public class Paint {
 	 * @param v The value that you wish to format
 	 * @return The formatted string.
 	 */
-	private final String formatValue(final int v){
+	private final String formatValue(final long v){
 		return (v > 1_000_000) ? String.format("%.2fm", ( (double) v / 1_000_000)) :
 			(v > 1000) ? String.format("%.1fk", ( (double) v / 1000)) :
 				v + "";
@@ -133,6 +159,7 @@ public class Paint {
 		g.drawString("Time Running: " +  formatTime(timeElapsed), 8, 65);
 		g.drawString("XP Gained: " + formatValue(script.getExperienceTracker().getGainedXP(this.skill)) + " (" + formatValue(script.getExperienceTracker().getGainedXPPerHour(this.skill)) + "/hr)", 8, 80);
 		g.drawString("Fish caught: " + getItemsGathered(itemsToTrack), 8, 95);
+		g.drawString("Gold earned: " + formatValue(itemPrice * getItemsGathered(itemsToTrack)), 8, 110);
 
 
 		// Highlight the fishing spot being used. Just kinda neat. :)
