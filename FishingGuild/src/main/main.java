@@ -14,13 +14,14 @@ import tasks.FindFishingSpot;
 import tasks.Fish;
 import tasks.FishWalkTo;
 import botlib.AbstractTask;
+import botlib.GUI;
 import botlib.Paint;
 import botlib.StateLogger;
 
 
 @ScriptManifest(author = "Jython",
 info = "Fishing Guild fisher.",
-name = "(task) Fishing Guild",
+name = "(gui) Fishing Guild",
 version = 1.0,
 logo = "")
 public class Main extends Script {
@@ -28,9 +29,16 @@ public class Main extends Script {
 	public final Optional<Boolean> DEBUG = Optional.of(true);
 	private Paint paint;
 	private StateLogger logger;
+	private GUI gui;
 
 	public Main() {
 		this.logger = StateLogger.getInstance(this, DEBUG);
+		this.gui = new GUI("Select what to fish:",
+				new String[]{
+				"Shark",
+				"Swordfish/Tuna",
+				"Lobster"
+		});
 	}
 
 	/**
@@ -40,6 +48,7 @@ public class Main extends Script {
 	 */
 	@Override
 	public void onStart() {
+		this.gui.createGUI();
 		this.paint = new Paint(this, logger);
 		getExperienceTracker().start(Skill.FISHING);
 		// Add all tasks
@@ -54,7 +63,9 @@ public class Main extends Script {
 
 	@Override
 	public void onPaint(Graphics2D g) {
-		this.paint.onPaint(g);
+		if (this.gui.started){
+			this.paint.onPaint(g);
+		}
 	}
 
 	/**
@@ -62,23 +73,28 @@ public class Main extends Script {
 	 */
 	@Override
 	public int onLoop() throws InterruptedException {
-		for (AbstractTask task : tasks ) {
-			task.executeIfReady();
+		if (this.gui.started){
+			for (AbstractTask task : tasks ) {
+				task.executeIfReady();
+			}
 		}
 		return random(200,300);
 	}
 
+	@Override
+	public void onExit() {
+		this.gui.destroyGUI();
+	}
+
 } // end class main
 
-// @TODO - improve paint
-//		http://osbot.org/forum/topic/87697-explvs-dank-paint-tutorial/
-//			- Change gained levels to xp/hr
-//			- Add all sorts of nice information :)
-// @TODO - add fishing options (and debug option?)
-// 		http://osbot.org/forum/topic/87731-explvs-dank-gui-tutorial/
-//			- lobsters
-//			- swordfish/tuna
-//			- sharks
+
+// @TODO - add fishing options (and debug option?) GUI
+//			- Actually use options selected.
+//			- Pass a data object around nicely.
+//			- Make sure all elements fit within JFrame
+//			- http://osbot.org/forum/topic/91617-tutorial-how-to-pass-data-from-you-gui-to-your-script/
+//			- http://osbot.org/forum/topic/88391-my-advice-on-guis/
 // @TODO - If you take long enough to find a spot, check the other dock.
 // @TODO - If you don't have the fishing item (pot, harpoon) then withdraw one from the bank.
 //				 If there's not one in the bank, log out and log that.
