@@ -25,7 +25,7 @@ public class Paint {
 	private String[] itemsToTrack;
 	private Skill skill;
 	private int itemsID;
-	private int itemPrice;
+	private long itemPrice;
 
 	public Paint(Script script, StateLogger logger) {
 		this.script = script;
@@ -76,7 +76,7 @@ public class Paint {
 		g.drawString("x", (int)script.getMouse().getPosition().getX() - 4, (int)script.getMouse().getPosition().getY() + 5);
 	}
 
-	private int getPrice(int id){
+	private long getPrice(int id){
 		int price = 0;
 
 		try {
@@ -103,9 +103,9 @@ public class Paint {
 		long s = ms / 1000, m = s / 60, h = m / 60, d = h / 24;
 		s %= 60; m %= 60; h %= 24;
 
-		return d > 0 ? String.format("%02d:%02d:%02d:%02d", d, h, m, s) :
-			h > 0 ? String.format("%02d:%02d:%02d", h, m, s) :
-				String.format("%02d:%02d", m, s);
+		return d > 0 ? String.format("%02d d %02d hr", d, h) :
+			h > 0 ? String.format("%02d hr %02d min", h, m) :
+				String.format("%02d min %02d s", m, s);
 	}
 
 	/**
@@ -113,9 +113,9 @@ public class Paint {
 	 * @param v The value that you wish to format
 	 * @return The formatted string.
 	 */
-	private final String formatValue(final long v){
-		return (v > 1_000_000) ? String.format("%.2fm", ( (double) v / 1_000_000)) :
-			(v > 1000) ? String.format("%.1fk", ( (double) v / 1000)) :
+	private final String formatValue(final double v){
+		return (v > 1_000_000) ? String.format("%.2fm", ( v / 1_000_000)) :
+			(v > 1000) ? String.format("%.1fk", ( v / 1000)) :
 				v + "";
 	}
 
@@ -147,6 +147,8 @@ public class Paint {
 	public void onPaint(Graphics2D g) {
 		// Get the time
 		long timeElapsed = System.currentTimeMillis() - this.timeStart;
+		double hoursElapsed = (double) timeElapsed / 3_600_000;
+		long goldEarned = itemPrice * getItemsGathered(itemsToTrack);
 
 		// Set the font
 		g.setFont(new Font("Trebuchet MS", Font.PLAIN, 14));
@@ -158,8 +160,9 @@ public class Paint {
 		g.drawString(logger.state, 8, 50);
 		g.drawString("Time Running: " +  formatTime(timeElapsed), 8, 65);
 		g.drawString("XP Gained: " + formatValue(script.getExperienceTracker().getGainedXP(this.skill)) + " (" + formatValue(script.getExperienceTracker().getGainedXPPerHour(this.skill)) + "/hr)", 8, 80);
-		g.drawString("Fish caught: " + getItemsGathered(itemsToTrack), 8, 95);
-		g.drawString("Gold earned: " + formatValue(itemPrice * getItemsGathered(itemsToTrack)), 8, 110);
+		g.drawString("Time to Level: " +  formatTime(script.getExperienceTracker().getTimeToLevel(this.skill)), 8, 95);
+		g.drawString("Fish caught: " + getItemsGathered(itemsToTrack), 8, 110);
+		g.drawString("Gold earned: " + formatValue(goldEarned) + " (" + formatValue(goldEarned / hoursElapsed) + "/hr)", 8, 125);
 
 
 		// Highlight the fishing spot being used. Just kinda neat. :)
