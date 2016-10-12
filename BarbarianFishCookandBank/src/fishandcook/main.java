@@ -19,10 +19,10 @@ import org.osbot.rs07.utility.ConditionalSleep;
 
 
 @ScriptManifest(author = "Jython",
-                info = "Fishes Trout/Salmon at Barbarian Village, cooks them, then banks the fish.",
-                name = "Barb. Village Fish n' Cook",
-                version = 1.0,
-                logo = "")
+info = "Fishes Trout/Salmon at Barbarian Village, cooks them, then banks the fish.",
+name = "Barb. Village Fish n' Cook",
+version = 1.0,
+logo = "")
 public class main extends Script {
 	private final Boolean DEBUG = false;
 	private long timeStart;
@@ -33,38 +33,38 @@ public class main extends Script {
 
 	private final Area northFishingArea = new Area(3106, 3436, 3110, 3430);
 	private final Area southFishingArea = new Area(3104, 3422, 3101, 3426);
-    private final Area[] fishingAreas = { northFishingArea,
-    									  southFishingArea};
-	private final Area bankArea = new Area(3094, 3488, 3092, 3492);
+	private final Area[] fishingAreas = { northFishingArea,
+			southFishingArea};
+	private final Area bankArea = new Area(3092, 3493, 3094, 3489);
 	private final String[] rawFishTypes = {"Raw trout", "Raw salmon"};
 	private final String[] cookedFishTypes = {"Trout", "Salmon"};
 
-  private enum State {
-	WALK_TO_BANK,
-	OPEN_BANK,
-	USE_AND_CLOSE_BANK,
-    WALK_TO_FISHING_SPOT,
-    FIND_FISHING_SPOT,
-    FISHING,
-    COOKING,
-    WAITING
+	private enum State {
+		WALK_TO_BANK,
+		OPEN_BANK,
+		USE_AND_CLOSE_BANK,
+		WALK_TO_FISHING_SPOT,
+		FIND_FISHING_SPOT,
+		FISHING,
+		COOKING,
+		WAITING
 	}
 
-    /**
-    * Runs once when the script is started.
-    * For this script, the method gets your current Fishing experience and starts our timer.
-    * Both used for the Paint updates.
-    */
+	/**
+	 * Runs once when the script is started.
+	 * For this script, the method gets your current Fishing experience and starts our timer.
+	 * Both used for the Paint updates.
+	 */
 	@Override
 	public void onStart() {
 		getExperienceTracker().start(Skill.FISHING);
 		timeStart = System.currentTimeMillis();
 		lastCheckedAntiban = System.currentTimeMillis();
-        fishCaught = 0;
+		fishCaught = 0;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param script	Most likely: client.getBot().getScriptExecutor().getCurrent()
 	 * @param g			The Graphics2D object passed into the onPaint() method
 	 * @param entity	The Entity whose tile you wish to draw on.
@@ -75,20 +75,20 @@ public class main extends Script {
 	 */
 	public void drawTile(Script script, Graphics g, Entity entity, Color tileColor, Color textColor, String s) {
 		Polygon polygon;
-		    if (entity != null && entity.exists() && (polygon = entity.getPosition().getPolygon(script.getBot(), entity.getPosition().getTileHeight(script.getBot()))) != null) {
-		        g.setColor(tileColor);
-		        for (int i = 0; i < polygon.npoints; i++) {
-		            g.setColor(new Color(0, 0, 0, 20));
-		            g.fillPolygon(polygon);
-		            g.setColor(tileColor);
-		            g.drawPolygon(polygon);
-		        }
-		        g.setColor(textColor);
-		        g.drawString(s, (int) polygon.getBounds().getX(), (int) polygon.getBounds().getY());
-		    }
+		if (entity != null && entity.exists() && (polygon = entity.getPosition().getPolygon(script.getBot(), entity.getPosition().getTileHeight(script.getBot()))) != null) {
+			g.setColor(tileColor);
+			for (int i = 0; i < polygon.npoints; i++) {
+				g.setColor(new Color(0, 0, 0, 20));
+				g.fillPolygon(polygon);
+				g.setColor(tileColor);
+				g.drawPolygon(polygon);
+			}
+			g.setColor(textColor);
+			g.drawString(s, (int) polygon.getBounds().getX(), (int) polygon.getBounds().getY());
 		}
+	}
 	/**
-	 * 
+	 *
 	 * @param script	Most likely: client.getBot().getScriptExecutor().getCurrent()
 	 * @param g			The Graphics2D object passed into the onPaint() method
 	 * @param position	The Position for the tile you are wishing to draw on
@@ -98,19 +98,19 @@ public class main extends Script {
 	 */
 	public void drawTile(Script script, Graphics g, Position position, Color tileColor, Color textColor, String s) {
 		Polygon polygon;
-		    if (position != null && (polygon = position.getPolygon(script.getBot(), position.getTileHeight(script.getBot()))) != null) {
-		        g.setColor(tileColor);
-		        for (int i = 0; i < polygon.npoints; i++) {
-		            g.setColor(new Color(0, 0, 0, 20));
-		            g.fillPolygon(polygon);
-		            g.setColor(tileColor);
-		            g.drawPolygon(polygon);
-		        }
-		        g.setColor(textColor);
-		        g.drawString(s, (int) polygon.getBounds().getX(), (int) polygon.getBounds().getY());
-		    }
+		if (position != null && (polygon = position.getPolygon(script.getBot(), position.getTileHeight(script.getBot()))) != null) {
+			g.setColor(tileColor);
+			for (int i = 0; i < polygon.npoints; i++) {
+				g.setColor(new Color(0, 0, 0, 20));
+				g.fillPolygon(polygon);
+				g.setColor(tileColor);
+				g.drawPolygon(polygon);
+			}
+			g.setColor(textColor);
+			g.drawString(s, (int) polygon.getBounds().getX(), (int) polygon.getBounds().getY());
 		}
-	
+	}
+
 	@Override
 	public void onPaint(Graphics2D g) {
 		long timeElapsed = System.currentTimeMillis() - timeStart;
@@ -125,13 +125,13 @@ public class main extends Script {
 		g.drawString("Time Running: " + (hours >= 10 ? "" + hours : "0" + hours) + ":" + (minutes >= 10 ? "" + minutes : "0" + minutes) + ":" + (seconds >= 10 ? "" + seconds : "0" + seconds), 8, 65);
 		g.drawString("XP Gained: " + getExperienceTracker().getGainedXP(Skill.FISHING) + " (" + getExperienceTracker().getGainedLevels(Skill.FISHING) + ")", 8, 80);
 		g.drawString("Fish caught: " + fishCaught, 8, 95);
-		
+
 		Script script = client.getBot().getScriptExecutor().getCurrent();
 		// Highlight the fishing spot being used. Just kinda neat. :)
 		if (myPlayer().getInteracting() != null) {
 			drawTile(client.getBot().getScriptExecutor().getCurrent(), g, myPlayer().getInteracting(), Color.cyan, Color.white, "");
 		}
-		
+
 		// DEBUG: Draw bank, bankDestination, and fishing areas.
 		if (DEBUG == true) {
 			for (Position p : bankArea.getPositions() ) {
@@ -153,18 +153,18 @@ public class main extends Script {
 			getMouse().move(random(100, 500), 0);
 		}
 	}
-	
+
 	private int getRandomCloseMouseX() {
 		int mouseXPosition = getMouse().getPosition().x;
 		return random(mouseXPosition-10, mouseXPosition+10);
 	}
-	
+
 	@SuppressWarnings("unused")
 	private int getRandomCloseMouseY() {
 		int mouseYPosition = getMouse().getPosition().y;
 		return random(mouseYPosition-10, mouseYPosition+10);
 	}
-	
+
 	/**
 	 * Nudge the mouse down onto the screen then back up, as if keeping the session awake.
 	 */
@@ -172,7 +172,7 @@ public class main extends Script {
 		getMouse().move(getRandomCloseMouseX(), random(110, 200));
 		getMouse().move(getRandomCloseMouseX(), 0);
 	}
-	
+
 	private void randomizeMouse() throws InterruptedException {
 		long now = System.currentTimeMillis();
 		long timeSinceLastAntiban = now - lastCheckedAntiban;
@@ -209,7 +209,7 @@ public class main extends Script {
 	/**
 	 * Gets the nearest bank to the player and opens it.
 	 * Waits up to 5-seconds for the bank to open and cuts the wait short when the bank opens.
-	 * 
+	 *
 	 * @throws InterruptedException
 	 */
 	private void openBank() throws InterruptedException {
@@ -222,7 +222,7 @@ public class main extends Script {
 		}.sleep();
 		log("Opening Bank");
 	}
-	
+
 	/**
 	 * If the state has changed, log it and update the state attribute for the paint.
 	 * @param newState - A string representing the current state of the player.
@@ -233,178 +233,186 @@ public class main extends Script {
 			log("State updated to: " + state);
 		}
 	}
-	
+
 	private Boolean inFishingAreas() {
 		for (Area a : fishingAreas) {
-			if (a.contains(myPlayer()))
+			if (a.contains(myPlayer())) {
 				return true;
+			}
 		}
 		return false;
 	}
-	
-	/**
-    * Gets the current state of the player.
-    * This method is intended to be run on every iteration of the onLoop() method to determine
-    * what actions needs to be performed.
-    *
-    * @return   State   the State that the player is in
-    */
-    private State getState() {
-    	Boolean inventoryFull = getInventory().isFull();
-    	Boolean inBank = bankArea.contains(myPlayer());
-    	Boolean inFishingArea = inFishingAreas();
-    	Boolean isAnimating = myPlayer().isAnimating();
-    	Boolean hasRawFish = (getInventory().contains(rawFishTypes));
-    	// Inventory full, banking and cooking states
-    	if (inventoryFull
-    			&& hasRawFish)
-    		return State.COOKING;
-        if (inventoryFull
-                && !inBank
-                && !getBank().isOpen())
-            return State.WALK_TO_BANK;
-        if (inventoryFull
-                && inBank
-                && !getBank().isOpen())
-            return State.OPEN_BANK;
-        if (inventoryFull
-                && getBank().isOpen())
-            return State.USE_AND_CLOSE_BANK;
-        // Inventory NOT full, fishing states
-        if (!inventoryFull
-                && !inFishingArea
-                && !getBank().isOpen())
-            return State.WALK_TO_FISHING_SPOT;
-        if (!inventoryFull
-                && inFishingArea
-                && !isAnimating)
-            return State.FIND_FISHING_SPOT;
-        if (!inventoryFull
-                && inFishingArea
-                && isAnimating)
-            return State.FISHING;
-		return State.WAITING;
-    }
 
-    private void useItem(String item) {
-    	stateLogger("Using: " + item);
-    	getInventory().interact("Use", item);
+	/**
+	 * Gets the current state of the player.
+	 * This method is intended to be run on every iteration of the onLoop() method to determine
+	 * what actions needs to be performed.
+	 *
+	 * @return   State   the State that the player is in
+	 */
+	private State getState() {
+		Boolean inventoryFull = getInventory().isFull();
+		Boolean inBank = bankArea.contains(myPlayer());
+		Boolean inFishingArea = inFishingAreas();
+		Boolean isAnimating = myPlayer().isAnimating();
+		Boolean hasRawFish = (getInventory().contains(rawFishTypes));
+		// Inventory full, banking and cooking states
+		if (inventoryFull
+				&& hasRawFish) {
+			return State.COOKING;
+		}
+		if (inventoryFull
+				&& !inBank
+				&& !getBank().isOpen()) {
+			return State.WALK_TO_BANK;
+		}
+		if (inventoryFull
+				&& inBank
+				&& !getBank().isOpen()) {
+			return State.OPEN_BANK;
+		}
+		if (inventoryFull
+				&& getBank().isOpen()) {
+			return State.USE_AND_CLOSE_BANK;
+		}
+		// Inventory NOT full, fishing states
+		if (!inventoryFull
+				&& !inFishingArea
+				&& !getBank().isOpen()) {
+			return State.WALK_TO_FISHING_SPOT;
+		}
+		if (!inventoryFull
+				&& inFishingArea
+				&& !isAnimating) {
+			return State.FIND_FISHING_SPOT;
+		}
+		if (!inventoryFull
+				&& inFishingArea
+				&& isAnimating) {
+			return State.FISHING;
+		}
+		return State.WAITING;
+	}
+
+	private void useItem(String item) {
+		stateLogger("Using: " + item);
+		getInventory().interact("Use", item);
 		new ConditionalSleep(5000) {
 			@Override
 			public boolean condition() throws InterruptedException {
 				return getInventory().isItemSelected();			    			}
 		}.sleep();
-    }
-    
-    private void cookOnFire(RS2Object fire, final String fish) throws InterruptedException {
-        if (fire != null) {
-        	stateLogger("Using fire.");
-        	fire.interact("Use");
-        	stateLogger("Waiting on widget to pop up.");
-    		new ConditionalSleep(5000) {
-    			@Override
-    			public boolean condition() throws InterruptedException {
-    				return (widgets.get(307, 4) != null && widgets.get(307, 4).isVisible());
-    			}
-    		}.sleep();
-    		widgets.get(307, 4).interact("Cook All");
+	}
+
+	private void cookOnFire(RS2Object fire, final String fish) throws InterruptedException {
+		if (fire != null) {
+			stateLogger("Using fire.");
+			fire.interact("Use");
+			stateLogger("Waiting on widget to pop up.");
+			new ConditionalSleep(5000) {
+				@Override
+				public boolean condition() throws InterruptedException {
+					return (widgets.get(307, 4) != null && widgets.get(307, 4).isVisible());
+				}
+			}.sleep();
+			widgets.get(307, 4).interact("Cook All");
 			stateLogger("Cooking " + fish);
 			sleep(1000); // Allow a second to get out of the cooking dialogue
-    		new ConditionalSleep(60000) {
-    			@Override
-    			public boolean condition() throws InterruptedException {
-    				return (!getInventory().contains(fish)
-    						|| getDialogues().inDialogue()); // leveling up
-    			}
-    		}.sleep();
+			new ConditionalSleep(60000) {
+				@Override
+				public boolean condition() throws InterruptedException {
+					return (!getInventory().contains(fish)
+							|| getDialogues().inDialogue()); // leveling up
+				}
+			}.sleep();
 
-        }
-    }
-    
-    /**
-    * A loop that continually runs, checking the State of the player and taking action accordingly.
-    */
+		}
+	}
+
+	/**
+	 * A loop that continually runs, checking the State of the player and taking action accordingly.
+	 */
 	@Override
 	public int onLoop() throws InterruptedException {
-        switch (getState()) {
-            case WALK_TO_BANK:
-            	stateLogger("Walking to bank");
-                sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
-                getWalking().webWalk(new Position(bankArea.getRandomPosition()));
-                break;
-            case OPEN_BANK:
-            	openBank();
-                break;
-            case USE_AND_CLOSE_BANK:
-            	stateLogger("Depositing items");
-    			getBank().depositAllExcept("Fly fishing rod", "Feather");
-    			new ConditionalSleep(5000) {
-    				@Override
-    				public boolean condition() throws InterruptedException {
-    					return (!getInventory().contains("Burnt fish")
-    							&& !getInventory().contains(cookedFishTypes));
-    				}
-    			}.sleep();
-    			stateLogger("Closing bank");
-    			getBank().close();
-                break;
-            case WALK_TO_FISHING_SPOT:
-            	stateLogger("Walking to fishing spots.");
-    			getWalking().webWalk(new Position(northFishingArea.getRandomPosition()));
-                break;
-            case FIND_FISHING_SPOT:
-            	stateLogger("Finding spot.");
-    			@SuppressWarnings("unchecked")
-				NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
-                    @Override
-                    public boolean match(NPC n) {
-                        return (n.hasAction("Lure"));
-                    }
-                });
-    			if (fishingSpot != null) {
-                    sleep(random(1000,3000)); // Be a little more human about your reaction time.
-    				fishingSpot.interact("Lure");
-    				inventoryCount = getInventory().getEmptySlots();
-    				new ConditionalSleep(5000) {
-    					@Override
-    					public boolean condition() throws InterruptedException {
-    						return myPlayer().isAnimating();
-    					}
-        			}.sleep();
-    			}
-                break;
-            case FISHING:
-            	stateLogger("Catching fish.");
-				randomizeMouse(); // antiban
-                // @TODO - instead of checking for anything in inventory, we should check for the addition of
-                // fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
-                // is in the inventory now for whatever reason (script paused, random, etc).
-				if (getInventory().getEmptySlots() != inventoryCount && inFishingAreas()) {
-					inventoryCount = getInventory().getEmptySlots();
-					fishCaught += 1;
+		switch (getState()) {
+		case WALK_TO_BANK:
+			stateLogger("Walking to bank");
+			sleep(random(1000,3000)); // Don't notice immediately when your inventory is full, eh?
+			getWalking().webWalk(new Position(bankArea.getRandomPosition()));
+			break;
+		case OPEN_BANK:
+			openBank();
+			break;
+		case USE_AND_CLOSE_BANK:
+			stateLogger("Depositing items");
+			getBank().depositAllExcept("Fly fishing rod", "Feather");
+			new ConditionalSleep(5000) {
+				@Override
+				public boolean condition() throws InterruptedException {
+					return (!getInventory().contains("Burnt fish")
+							&& !getInventory().contains(cookedFishTypes));
 				}
-                break;
-            case COOKING:
-            	stateLogger("Cooking.");
-            	RS2Object fire = getObjects().closest(26185);
-                if (!myPlayer().isAnimating()) { // Only attempt to take an action if I'm not already cooking.
-	            	for (final String fish : rawFishTypes) {
-	            		if (getInventory().contains(fish)) {
-	            			// click on the raw fish in the inventory
-	            			useItem(fish);
-	            			// use fish on fire
-	            			cookOnFire(fire, fish);
-	            		}
-	            	}
-                }
-                break;
-            default:
-                // I wouldn't expect to ever get here. It's prudent to add a default though.
-            	stateLogger("Unexpected condition. Waiting.");
-				sleep(1000);
-        }
-        return random(200,300);
-    } // end onLoop()
+			}.sleep();
+			stateLogger("Closing bank");
+			getBank().close();
+			break;
+		case WALK_TO_FISHING_SPOT:
+			stateLogger("Walking to fishing spots.");
+			getWalking().webWalk(new Position(northFishingArea.getRandomPosition()));
+			break;
+		case FIND_FISHING_SPOT:
+			stateLogger("Finding spot.");
+			@SuppressWarnings("unchecked")
+			NPC fishingSpot = getNpcs().closest(new Filter<NPC>() {
+				@Override
+				public boolean match(NPC n) {
+					return (n.hasAction("Lure"));
+				}
+			});
+			if (fishingSpot != null) {
+				sleep(random(1000,3000)); // Be a little more human about your reaction time.
+				fishingSpot.interact("Lure");
+				inventoryCount = getInventory().getEmptySlots();
+				new ConditionalSleep(5000) {
+					@Override
+					public boolean condition() throws InterruptedException {
+						return myPlayer().isAnimating();
+					}
+				}.sleep();
+			}
+			break;
+		case FISHING:
+			stateLogger("Catching fish.");
+			randomizeMouse(); // antiban
+			// @TODO - instead of checking for anything in inventory, we should check for the addition of
+			// fish, thereby being more explicit. fishCaught shouldn't go up if something other than fish
+			// is in the inventory now for whatever reason (script paused, random, etc).
+			if (getInventory().getEmptySlots() != inventoryCount && inFishingAreas()) {
+				inventoryCount = getInventory().getEmptySlots();
+				fishCaught += 1;
+			}
+			break;
+		case COOKING:
+			stateLogger("Cooking.");
+			RS2Object fire = getObjects().closest(26185);
+			if (!myPlayer().isAnimating()) { // Only attempt to take an action if I'm not already cooking.
+				for (final String fish : rawFishTypes) {
+					if (getInventory().contains(fish)) {
+						// click on the raw fish in the inventory
+						useItem(fish);
+						// use fish on fire
+						cookOnFire(fire, fish);
+					}
+				}
+			}
+			break;
+		default:
+			// I wouldn't expect to ever get here. It's prudent to add a default though.
+			stateLogger("Unexpected condition. Waiting.");
+			sleep(1000);
+		}
+		return random(200,300);
+	} // end onLoop()
 } // end class main
 
 // @TODO - improve paint

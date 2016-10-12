@@ -30,7 +30,7 @@ public class BankUse extends AbstractTask {
 
 	public BankUse(MethodProvider api, Optional<Boolean> debug, String[] depositAllExcept) {
 		super(api, "Using the bank", debug);
-		this.depositAllExcept= depositAllExcept;
+		this.depositAllExcept = depositAllExcept;
 	}
 
 	/**

@@ -21,7 +21,7 @@ import botlib.StateLogger;
 
 @ScriptManifest(author = "Jython",
 info = "Fishing Guild fisher.",
-name = "(gui) Fishing Guild",
+name = "(guib) Fishing Guild",
 version = 1.0,
 logo = "")
 public class Main extends Script {
