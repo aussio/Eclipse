@@ -34,14 +34,8 @@ public class FindFishingSpot extends AbstractTask {
 	private final Area northernFishingSpots = new Area(2598, 3419, 2605, 3426);
 
 	public FindFishingSpot(MethodProvider api, Optional<Boolean> debug) {
-		super(api, "Finding fishing spot", debug);
-	}
-
-	/**
-	 * Alternate constructor allowing for the default state String to be overridden.
-	 */
-	public FindFishingSpot(MethodProvider api, String state, Optional<Boolean> debug) {
-		super(api, state, debug);
+		super(api, debug);
+		this.state = "Finding a fishing spot";
 	}
 
 	/**

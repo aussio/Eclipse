@@ -15,21 +15,20 @@ import org.osbot.rs07.api.model.Entity;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.script.Script;
 
-public class Paint {
+public class Paint implements Subscriber{
 
 	private long timeStart;
 	private Script script;
-	private StateLogger logger;
 	private long previousItemCount;
 	private long itemsCollected;
 	private String[] itemsToTrack;
 	private Skill skill;
 	private int itemsID;
 	private long itemPrice;
+	private String state;
 
 	public Paint(Script script, StateLogger logger) {
 		this.script = script;
-		this.logger = logger;
 		this.timeStart = System.currentTimeMillis();
 		this.itemsToTrack = new String[]{"Raw Shark"};
 		this.itemsID = 383;
@@ -37,6 +36,7 @@ public class Paint {
 		this.skill = Skill.FISHING;
 		this.itemsCollected = 0;
 		this.previousItemCount = script.getInventory().getAmount(itemsToTrack);
+		this.state = "Brett was here";
 	}
 
 	public void drawTile(Script script, Graphics g, Entity entity, Color tileColor, Color textColor, String s) {
@@ -144,6 +144,10 @@ public class Paint {
 		return this.itemsCollected;
 	}
 
+	public void update(String newState){
+		this.state = newState;
+	}
+
 	public void onPaint(Graphics2D g) {
 		// Get the time
 		long timeElapsed = System.currentTimeMillis() - this.timeStart;
@@ -157,7 +161,7 @@ public class Paint {
 		drawMouse(g);
 
 		// Draw the XP gains paint
-		g.drawString(logger.state, 8, 50);
+		g.drawString(this.state, 8, 50);
 		g.drawString("Time Running: " +  formatTime(timeElapsed), 8, 65);
 		g.drawString("XP Gained: " + formatValue(script.getExperienceTracker().getGainedXP(this.skill)) + " (" + formatValue(script.getExperienceTracker().getGainedXPPerHour(this.skill)) + "/hr)", 8, 80);
 		g.drawString("Time to Level: " +  formatTime(script.getExperienceTracker().getTimeToLevel(this.skill)), 8, 95);
@@ -183,4 +187,6 @@ public class Paint {
 		//			}
 		//		}
 	}
+
+
 }

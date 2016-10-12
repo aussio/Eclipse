@@ -30,8 +30,8 @@ public class FishWalkTo extends AbstractTask {
 			});
 
 	public FishWalkTo(MethodProvider api, Optional<Boolean> debug) {
-		super(api, "Walking to fishing spots", debug);
-		// TODO Auto-generated constructor stub
+		super(api, debug);
+		this.state = "Walking to fishing spots";
 	}
 
 	/**

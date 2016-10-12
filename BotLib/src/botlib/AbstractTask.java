@@ -9,11 +9,12 @@ import org.osbot.rs07.script.MethodProvider;
  * A "Task" is intended to have a method by which the caller can check if the Task needs to be called
  *   and an associated method to perform the work of the task when the Task does need to be called.
  */
-public abstract class AbstractTask {
+public abstract class AbstractTask implements Publisher{
 
 	protected MethodProvider api;
 	protected StateLogger logger;
 	protected String state;
+	protected Subscriber[] subscribers;
 
 	/**
 	 * Take in the script context so that the osbot methods run on the script using the Tasks.
@@ -22,9 +23,8 @@ public abstract class AbstractTask {
 	 * @param api
 	 * @param debug An optional parameter determining if we're running in debug mode.
 	 */
-	public AbstractTask(MethodProvider api, String state, Optional<Boolean> debug) {
+	public AbstractTask(MethodProvider api, Optional<Boolean> debug) {
 		this.api = api;
-		this.state = state;
 		this.logger = StateLogger.getInstance(api, debug);
 	}
 
@@ -44,9 +44,19 @@ public abstract class AbstractTask {
 	 */
 	public void executeIfReady() throws InterruptedException {
 		if (shouldExecute()) {
-			logger.update(state);
+			notify_subscribers();
 			execute();
 		}
+	}
+
+	public void notify_subscribers(){
+		for( Subscriber sub : this.subscribers){
+			sub.update(this.state);
+		}
+	}
+
+	public void attach(Subscriber... subscribers){
+		this.subscribers = subscribers;
 	}
 
 }

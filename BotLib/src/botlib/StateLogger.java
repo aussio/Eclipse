@@ -9,7 +9,7 @@ import org.osbot.rs07.script.MethodProvider;
  * @author austincurtis
  *
  */
-public class StateLogger {
+public class StateLogger implements Subscriber {
 
 	private static StateLogger instance = null;
 	public String state = "Initializing";
@@ -45,7 +45,7 @@ public class StateLogger {
 	 * @param state - A string representing the current state of the player.
 	 */
 	public void update(String newState) {
-		if (this.state != newState) {
+		if (! this.state.equals(newState)) {
 			this.state = newState;
 			if (this.debug) {
 				api.log("STATE: " + this.state);

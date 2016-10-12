@@ -16,6 +16,7 @@ import tasks.FishWalkTo;
 import botlib.AbstractTask;
 import botlib.GUI;
 import botlib.Paint;
+import botlib.Publisher;
 import botlib.StateLogger;
 
 
@@ -59,6 +60,10 @@ public class Main extends Script {
 				new BankWalkTo(this, this.DEBUG),
 				new BankUse(this, this.DEBUG, new String[]{"Harpoon"})
 				);
+
+		for (Publisher pub : this.tasks) {
+			pub.attach(this.paint, this.logger);
+		}
 	}
 
 	@Override

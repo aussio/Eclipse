@@ -31,8 +31,9 @@ public class Fish extends AbstractTask {
 	private Antiban antiban;
 
 	public Fish(MethodProvider api, Optional<Boolean> debug) {
-		super(api, "Catching fish", debug);
+		super(api, debug);
 		this.antiban = new Antiban(api);
+		this.state = "Catching fish";
 	}
 
 	@Override

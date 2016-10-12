@@ -28,7 +28,8 @@ public class BankWalkTo extends AbstractTask {
 			});
 
 	public BankWalkTo(MethodProvider api, Optional<Boolean> debug) {
-		super(api, "Walking to the bank", debug);
+		super(api, debug);
+		this.state = "Walking to the bank";
 	}
 
 	/**
